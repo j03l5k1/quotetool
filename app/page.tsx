@@ -213,12 +213,10 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {pipeLines.length === 0 && (
-                    <div className="text-center py-8 bg-dark-lighter rounded-xl border border-gray-700">
+                      <div className="text-center py-8 bg-dark-lighter rounded-xl border border-gray-700">
                       <p className="text-gray-400">No pipe lines added yet</p>
-                      <p className="text-gray-500 text-sm mt-1">Click "Add Line" to start</p>
+                      <p className="text-gray-500 text-sm mt-1">Click &ldquo;Add Line&rdquo; to start</p>
                     </div>
-                  )}
 
                   <div className="space-y-4">
                     {pipeLines.map((line, index) => (
