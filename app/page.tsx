@@ -785,20 +785,22 @@ export default function Home() {
                 {summaryCollapsed ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-white font-bold text-base">Total</span>
-                      <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
-                        ${grandTotal.toLocaleString()}
-                      </span>
+                      <button
+                        onClick={() => setSummaryCollapsed(false)}
+                        className="text-primary hover:text-white text-sm font-semibold transition-colors flex items-center gap-1.5"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                        Show full summary
+                      </button>
+                      <div className="flex items-end gap-2">
+                        <span className="text-white font-bold text-lg">Total</span>
+                        <span className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent leading-none">
+                          ${grandTotal.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => setSummaryCollapsed(false)}
-                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1"
-                    >
-                      Show full summary
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
                   </div>
                 ) : (
                   <>
