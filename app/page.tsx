@@ -386,33 +386,33 @@ export default function Home() {
                       </div>
                       <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
                       
-                      {/* Address, Email, Phone in consistent style */}
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2 text-gray-300 text-sm">
+                      {/* Address, Email, Phone layout */}
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        {/* Left column - Address */}
+                        <div className="flex items-start gap-2 text-gray-300 text-sm col-span-1">
                           <Icons.MapPin />
-                          <p className="leading-relaxed flex-1">{jobData.job.job_address}</p>
+                          <p className="leading-snug text-xs">{jobData.job.job_address}</p>
                         </div>
                         
-                        {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
-                          <div className="grid grid-cols-2 gap-x-4">
-                            {jobData.contact.email && (
-                              <div className="flex items-center gap-2 text-gray-300 text-sm">
-                                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <p className="truncate text-xs">{jobData.contact.email}</p>
-                              </div>
-                            )}
-                            {(jobData.contact.mobile || jobData.contact.phone) && (
-                              <div className="flex items-center gap-2 text-gray-300 text-sm">
-                                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                <p className="text-xs">{jobData.contact.mobile || jobData.contact.phone}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        {/* Right column - Email and Phone stacked */}
+                        <div className="flex flex-col gap-1.5 col-span-1">
+                          {jobData.contact?.email && (
+                            <div className="flex items-center gap-2 text-gray-300 text-sm">
+                              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              <p className="truncate text-xs">{jobData.contact.email}</p>
+                            </div>
+                          )}
+                          {(jobData.contact?.mobile || jobData.contact?.phone) && (
+                            <div className="flex items-center gap-2 text-gray-300 text-sm">
+                              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                              <p className="text-xs">{jobData.contact.mobile || jobData.contact.phone}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
@@ -865,27 +865,27 @@ export default function Home() {
                     
                     <div className="space-y-1 mb-2">
                       {pipeLines.map((line, index) => (
-                        <div key={line.id} className="flex justify-between text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
-                          <span className="font-medium">
-                            Line {pipeLines.length - index} - {line.meters}m of {line.size} pipe relining (50 year warranty)
+                        <div key={line.id} className="flex justify-between items-start gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
+                          <span className="font-medium leading-tight flex-1">
+                            Line {pipeLines.length - index} - {line.meters}m of {line.size} pipe relining (50yr warranty)
                           </span>
-                          <span className="font-bold whitespace-nowrap ml-2">${calculateLineTotal(line).toLocaleString()}</span>
+                          <span className="font-bold whitespace-nowrap">${calculateLineTotal(line).toLocaleString()}</span>
                         </div>
                       ))}
                       {diggingEnabled && diggingHours > 0 && (
-                        <div className="flex justify-between text-orange-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
+                        <div className="flex justify-between items-center gap-2 text-orange-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                           <span className="font-medium">Digging ({diggingHours}h)</span>
-                          <span className="font-bold whitespace-nowrap ml-2">${diggingTotal.toLocaleString()}</span>
+                          <span className="font-bold whitespace-nowrap">${diggingTotal.toLocaleString()}</span>
                         </div>
                       )}
                       {extraItems.length > 0 && (
                         <>
                           {extraItems.map((item, index) => (
-                            <div key={item.id} className="flex justify-between text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
-                              <span className="font-medium">
+                            <div key={item.id} className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
+                              <span className="font-medium leading-tight flex-1">
                                 {item.note || `Extra ${extraItems.length - index}`}
                               </span>
-                              <span className="font-bold whitespace-nowrap ml-2">${item.amount.toLocaleString()}</span>
+                              <span className="font-bold whitespace-nowrap">${item.amount.toLocaleString()}</span>
                             </div>
                           ))}
                         </>
