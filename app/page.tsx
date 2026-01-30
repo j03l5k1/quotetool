@@ -102,7 +102,12 @@ export default function Home() {
   const [jobData, setJobData] = useState<JobData | null>(null);
   
   // Quote details
-  const [pipeLines, setPipeLines] = useState<PipeLine[]>([]);
+  const [pipeLines, setPipeLines] = useState<PipeLine[]>([{
+    id: Date.now().toString(),
+    size: '100mm',
+    meters: 10,
+    junctions: 0,
+  }]);
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
