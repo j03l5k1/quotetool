@@ -829,7 +829,7 @@ export default function Home() {
       {jobData && pipeLines.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent py-2 pb-safe z-50 animate-slideUp">
           <div className="max-w-4xl mx-auto px-3">
-            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-3 shadow-2xl shadow-primary/20 backdrop-blur-xl">
+            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-3 shadow-2xl shadow-primary/20 backdrop-blur-xl max-w-2xl mx-auto">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
               
               <div className="relative">
