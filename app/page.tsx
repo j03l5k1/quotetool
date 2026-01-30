@@ -153,7 +153,7 @@ export default function Home() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [undoStack, setUndoStack] = useState<PipeLine[]>([]);
   const [showUndo, setShowUndo] = useState(false);
-  const [summaryCollapsed, setSummaryCollapsed] = useState(false);
+  const [summaryCollapsed, setSummaryCollapsed] = useState(true); // Default to collapsed
 
   // Auto-save draft to localStorage
   useEffect(() => {
@@ -769,7 +769,7 @@ export default function Home() {
         
         {/* Spacer for sticky footer - ensures content isn't hidden */}
         {jobData && pipeLines.length > 0 && (
-          <div className="h-[280px]" />
+          <div className="h-[200px]" />
         )}
       </div>
 
@@ -783,15 +783,23 @@ export default function Home() {
               <div className="relative">
                 {/* Collapsed View */}
                 {summaryCollapsed ? (
-                  <button
-                    onClick={() => setSummaryCollapsed(false)}
-                    className="w-full flex items-center justify-between mb-3"
-                  >
-                    <span className="text-white font-bold text-base">Total</span>
-                    <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
-                      ${grandTotal.toLocaleString()}
-                    </span>
-                  </button>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-bold text-base">Total</span>
+                      <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
+                        ${grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setSummaryCollapsed(false)}
+                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1"
+                    >
+                      Show full summary
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
                 ) : (
                   <>
                     {/* Expanded View */}
@@ -801,28 +809,41 @@ export default function Home() {
                       </h3>
                       <button
                         onClick={() => setSummaryCollapsed(true)}
-                        className="text-gray-400 hover:text-white text-xs"
+                        className="text-primary hover:text-white text-xs font-semibold flex items-center gap-1"
                       >
-                        Collapse
+                        Hide
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
                       </button>
                     </div>
                     
                     <div className="space-y-1.5 mb-3">
-                      <div className="flex justify-between text-gray-200 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
-                        <span className="font-medium">Pipe Work ({pipeLines.length})</span>
-                        <span className="font-bold">${pipeWorkTotal.toLocaleString()}</span>
-                      </div>
+                      {pipeLines.map((line, index) => (
+                        <div key={line.id} className="flex justify-between text-gray-200 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                          <span className="font-medium">
+                            Line {pipeLines.length - index} - {line.meters}m of {line.size} pipe relining (50 year warranty)
+                          </span>
+                          <span className="font-bold whitespace-nowrap ml-2">${calculateLineTotal(line).toLocaleString()}</span>
+                        </div>
+                      ))}
                       {diggingEnabled && diggingHours > 0 && (
                         <div className="flex justify-between text-orange-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
                           <span className="font-medium">Digging ({diggingHours}h)</span>
-                          <span className="font-bold">${diggingTotal.toLocaleString()}</span>
+                          <span className="font-bold whitespace-nowrap ml-2">${diggingTotal.toLocaleString()}</span>
                         </div>
                       )}
                       {extraItems.length > 0 && (
-                        <div className="flex justify-between text-purple-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
-                          <span className="font-medium">Extras ({extraItems.length})</span>
-                          <span className="font-bold">${extrasTotal.toLocaleString()}</span>
-                        </div>
+                        <>
+                          {extraItems.map((item, index) => (
+                            <div key={item.id} className="flex justify-between text-purple-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                              <span className="font-medium">
+                                {item.note || `Extra ${extraItems.length - index}`}
+                              </span>
+                              <span className="font-bold whitespace-nowrap ml-2">${item.amount.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </>
                       )}
                     </div>
                     
