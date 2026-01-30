@@ -66,7 +66,6 @@ const PRICING = {
   diggingPerHour: 180,
 };
 
-
 // Icons
 const Icons = {
   Plus: () => (
@@ -253,16 +252,6 @@ export default function Home() {
       id: Date.now().toString(),
     };
     setPipeLines([newLine, ...pipeLines]);
-  };
-
-  const applyPreset = (preset: typeof JOB_PRESETS[0]) => {
-    const newLine: PipeLine = {
-      id: Date.now().toString(),
-      size: preset.size,
-      meters: preset.meters,
-      junctions: preset.junctions,
-    };
-    setPipeLines([newLine]);
   };
 
   const addExtraItem = () => {
