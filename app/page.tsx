@@ -222,24 +222,25 @@ export default function Home() {
 
                 {/* Pipe Lines */}
                 <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-white">Pipe Work</h3>
-                    <button
-                      onClick={addPipeLine}
-                      className="px-5 py-3 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-colors text-base"
-                    >
-                      + Add Line
-                    </button>
-                  </div>
-
-                  {pipeLines.length === 0 ? (
-                    <div className="text-center py-12 bg-dark-lighter rounded-xl border-2 border-dashed border-gray-700">
-                      <p className="text-gray-400 text-lg">No pipe lines added yet</p>
-                      <p className="text-gray-500 text-sm mt-2">Tap &ldquo;Add Line&rdquo; to start</p>
+                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 border-2 border-primary/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-white">Pipe Work</h3>
+                      <button
+                        onClick={addPipeLine}
+                        className="px-5 py-3 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-colors text-base"
+                      >
+                        + Add Line
+                      </button>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {[...pipeLines].reverse().map((line, index) => (
+
+                    {pipeLines.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 text-base">No pipe lines yet</p>
+                        <p className="text-gray-500 text-sm mt-1">Tap &ldquo;Add Line&rdquo; above to start</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 mt-4">
+                        {[...pipeLines].reverse().map((line, index) => (
                         <div key={line.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-5 border border-gray-700">
                           <div className="flex items-start justify-between mb-4">
                             <span className="text-primary font-bold text-lg">Line {pipeLines.length - index}</span>
@@ -346,6 +347,7 @@ export default function Home() {
                       ))}
                     </div>
                   )}
+                  </div>
                 </div>
 
                 {/* Digging Section */}
@@ -419,16 +421,16 @@ export default function Home() {
                     </div>
 
                     {extraItems.length === 0 ? (
-                      <div className="text-center py-8 bg-dark-lighter rounded-xl border-2 border-dashed border-gray-700">
-                        <p className="text-gray-400 text-base">No extras added</p>
-                        <p className="text-gray-500 text-sm mt-2">Materials, equipment, etc.</p>
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 text-base">No extras yet</p>
+                        <p className="text-gray-500 text-sm mt-1">Materials, equipment, etc.</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {extraItems.map((item, index) => (
+                      <div className="space-y-3 mt-4">
+                        {[...extraItems].reverse().map((item, index) => (
                           <div key={item.id} className="bg-dark-lighter rounded-xl p-4 border border-purple-500/30">
                             <div className="flex items-start justify-between mb-3">
-                              <span className="text-purple-400 font-bold text-base">Extra {index + 1}</span>
+                              <span className="text-purple-400 font-bold text-base">Extra {extraItems.length - index}</span>
                               <button
                                 onClick={() => removeExtraItem(item.id)}
                                 className="text-red-400 hover:text-red-300 font-semibold px-3 py-1 border border-red-400/30 rounded-lg text-sm"
