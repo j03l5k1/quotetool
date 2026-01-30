@@ -393,14 +393,14 @@ export default function Home() {
                           <p className="leading-relaxed flex-1">{jobData.job.job_address}</p>
                         </div>
                         
-                        {jobData.contact && (
-                          <div className="grid grid-cols-2 gap-3">
+                        {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
+                          <div className="grid grid-cols-2 gap-x-4">
                             {jobData.contact.email && (
                               <div className="flex items-center gap-2 text-gray-300 text-sm">
                                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
-                                <p className="truncate">{jobData.contact.email}</p>
+                                <p className="truncate text-xs">{jobData.contact.email}</p>
                               </div>
                             )}
                             {(jobData.contact.mobile || jobData.contact.phone) && (
@@ -408,22 +408,44 @@ export default function Home() {
                                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
-                                <p>{jobData.contact.mobile || jobData.contact.phone}</p>
+                                <p className="text-xs">{jobData.contact.mobile || jobData.contact.phone}</p>
                               </div>
                             )}
                           </div>
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        setJobData(null);
-                        localStorage.removeItem('quoteDraft');
-                      }}
-                      className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95 flex-shrink-0"
-                    >
-                      Change
-                    </button>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          if (confirm('Start a new quote? This will clear all current data.')) {
+                            setJobData(null);
+                            setPipeLines([{
+                              id: Date.now().toString(),
+                              size: '100mm',
+                              meters: 10,
+                              junctions: 0,
+                            }]);
+                            setDiggingHours(0);
+                            setDiggingEnabled(false);
+                            setExtraItems([]);
+                            localStorage.removeItem('quoteDraft');
+                          }
+                        }}
+                        className="text-orange-400 hover:text-orange-300 text-sm font-bold border border-orange-400/30 hover:border-orange-400/50 px-3 py-2 rounded-xl transition-all hover:bg-orange-400/10 active:scale-95"
+                      >
+                        New
+                      </button>
+                      <button
+                        onClick={() => {
+                          setJobData(null);
+                          localStorage.removeItem('quoteDraft');
+                        }}
+                        className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-3 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95"
+                      >
+                        Change
+                      </button>
+                    </div>
                   </div>
                   
                   {/* Job Notes */}
@@ -799,34 +821,34 @@ export default function Home() {
         
         {/* Spacer for sticky footer - ensures content isn't hidden */}
         {jobData && pipeLines.length > 0 && (
-          <div className="h-[200px]" />
+          <div className="h-[160px]" />
         )}
       </div>
 
       {/* Sticky Summary Footer */}
       {jobData && pipeLines.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent pt-2 pb-safe z-50 animate-slideUp">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent py-2 pb-safe z-50 animate-slideUp">
           <div className="max-w-4xl mx-auto px-3">
-            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-4 shadow-2xl shadow-primary/20 backdrop-blur-xl">
+            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-3 shadow-2xl shadow-primary/20 backdrop-blur-xl">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
               
               <div className="relative">
                 {/* Collapsed View */}
                 {summaryCollapsed ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <button
                       onClick={() => setSummaryCollapsed(false)}
-                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 pb-2"
+                      className="w-full text-primary hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1 pb-1"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
                       Show full summary
                     </button>
-                    <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-4 border-2 border-emerald-500/40 mx-auto max-w-xs mb-4">
+                    <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-2.5 border-2 border-emerald-500/40 mx-auto max-w-xs">
                       <div className="flex items-center justify-between">
-                        <span className="text-emerald-200 font-bold text-base">Total</span>
-                        <span className="text-4xl font-bold text-emerald-300 leading-none">
+                        <span className="text-emerald-200 font-bold text-sm">Total</span>
+                        <span className="text-3xl font-bold text-emerald-300 leading-none">
                           ${grandTotal.toLocaleString()}
                         </span>
                       </div>
@@ -835,15 +857,15 @@ export default function Home() {
                 ) : (
                   <>
                     {/* Expanded View */}
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-bold text-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-base font-bold text-white">
                         Summary
                       </h3>
                     </div>
                     
-                    <div className="space-y-1.5 mb-3">
+                    <div className="space-y-1 mb-2">
                       {pipeLines.map((line, index) => (
-                        <div key={line.id} className="flex justify-between text-gray-200 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                        <div key={line.id} className="flex justify-between text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                           <span className="font-medium">
                             Line {pipeLines.length - index} - {line.meters}m of {line.size} pipe relining (50 year warranty)
                           </span>
@@ -851,7 +873,7 @@ export default function Home() {
                         </div>
                       ))}
                       {diggingEnabled && diggingHours > 0 && (
-                        <div className="flex justify-between text-orange-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                        <div className="flex justify-between text-orange-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                           <span className="font-medium">Digging ({diggingHours}h)</span>
                           <span className="font-bold whitespace-nowrap ml-2">${diggingTotal.toLocaleString()}</span>
                         </div>
@@ -859,7 +881,7 @@ export default function Home() {
                       {extraItems.length > 0 && (
                         <>
                           {extraItems.map((item, index) => (
-                            <div key={item.id} className="flex justify-between text-purple-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                            <div key={item.id} className="flex justify-between text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                               <span className="font-medium">
                                 {item.note || `Extra ${extraItems.length - index}`}
                               </span>
@@ -870,9 +892,9 @@ export default function Home() {
                       )}
                     </div>
                     
-                    <div className="pt-3 border-t-2 border-primary/30 mb-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-white font-bold text-lg">TOTAL</span>
+                    <div className="pt-2 border-t-2 border-primary/30 mb-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-bold text-base">TOTAL</span>
                         <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent animate-pulse-slow">
                           ${grandTotal.toLocaleString()}
                         </span>
@@ -881,9 +903,9 @@ export default function Home() {
 
                     <button
                       onClick={() => setSummaryCollapsed(true)}
-                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 mb-3"
+                      className="w-full text-primary hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1 mb-2"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                       Hide summary
@@ -893,7 +915,7 @@ export default function Home() {
                 
                 <button
                   disabled={!isValid}
-                  className="w-full py-3.5 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-base rounded-xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none"
+                  className="w-full py-3 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-base rounded-xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none mt-2"
                   onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
                 >
                   Generate Quote
