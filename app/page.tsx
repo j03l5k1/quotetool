@@ -384,10 +384,35 @@ export default function Home() {
                           #{jobData.job.generated_job_id}
                         </span>
                       </div>
-                      <p className="text-white font-bold text-lg mb-2">{jobData.company.name}</p>
-                      <div className="flex items-start gap-2 text-gray-300 text-sm mb-3">
-                        <Icons.MapPin />
-                        <p className="leading-relaxed">{jobData.job.job_address}</p>
+                      <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
+                      
+                      {/* Address, Email, Phone in consistent style */}
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2 text-gray-300 text-sm">
+                          <Icons.MapPin />
+                          <p className="leading-relaxed flex-1">{jobData.job.job_address}</p>
+                        </div>
+                        
+                        {jobData.contact && (
+                          <div className="grid grid-cols-2 gap-3">
+                            {jobData.contact.email && (
+                              <div className="flex items-center gap-2 text-gray-300 text-sm">
+                                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <p className="truncate">{jobData.contact.email}</p>
+                              </div>
+                            )}
+                            {(jobData.contact.mobile || jobData.contact.phone) && (
+                              <div className="flex items-center gap-2 text-gray-300 text-sm">
+                                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <p>{jobData.contact.mobile || jobData.contact.phone}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <button
@@ -400,24 +425,6 @@ export default function Home() {
                       Change
                     </button>
                   </div>
-
-                  {/* Contact Info */}
-                  {jobData.contact && (
-                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-primary/20">
-                      {jobData.contact.email && (
-                        <div className="bg-primary/10 rounded-lg p-2">
-                          <p className="text-primary/60 text-xs font-semibold mb-0.5">Email</p>
-                          <p className="text-gray-200 text-xs truncate">{jobData.contact.email}</p>
-                        </div>
-                      )}
-                      {(jobData.contact.mobile || jobData.contact.phone) && (
-                        <div className="bg-primary/10 rounded-lg p-2">
-                          <p className="text-primary/60 text-xs font-semibold mb-0.5">Phone</p>
-                          <p className="text-gray-200 text-xs">{jobData.contact.mobile || jobData.contact.phone}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
                   
                   {/* Job Notes */}
                   {jobData.job.job_description && (
@@ -456,7 +463,7 @@ export default function Home() {
 
                   <div className="space-y-3">
                     {[...pipeLines].reverse().map((line, index) => {
-                      // Different colors for each line
+                      // Different colors for each line - newest lines get first colors
                       const lineColors = [
                         'bg-cyan-500/20 border-cyan-500/40 text-cyan-400',
                         'bg-blue-500/20 border-blue-500/40 text-blue-400',
@@ -465,7 +472,9 @@ export default function Home() {
                         'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
                         'bg-orange-500/20 border-orange-500/40 text-orange-400',
                       ];
-                      const colorClass = lineColors[index % lineColors.length];
+                      // Use modulo on the actual line position, not the reversed index
+                      const linePosition = pipeLines.findIndex(l => l.id === line.id);
+                      const colorClass = lineColors[linePosition % lineColors.length];
                       
                       return (
                       <div 
@@ -502,26 +511,24 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => updatePipeLine(line.id, 'size', '100mm')}
-                              className={`py-4 rounded-xl font-bold transition-all text-base relative overflow-hidden active:scale-95 ${
+                              className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
                                 line.size === '100mm'
                                   ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
                                   : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
                               }`}
                             >
-                              <div className="font-bold">100mm</div>
-                              <div className="text-xs font-normal opacity-80 mt-0.5">Standard</div>
+                              100mm
                             </button>
                             <button
                               type="button"
                               onClick={() => updatePipeLine(line.id, 'size', '150mm')}
-                              className={`py-4 rounded-xl font-bold transition-all text-base relative overflow-hidden active:scale-95 ${
+                              className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
                                 line.size === '150mm'
                                   ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
                                   : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
                               }`}
                             >
-                              <div className="font-bold">150mm</div>
-                              <div className="text-xs font-normal opacity-80 mt-0.5">Multi-dwelling</div>
+                              150mm
                             </button>
                           </div>
                         </div>
@@ -816,7 +823,7 @@ export default function Home() {
                       </svg>
                       Show full summary
                     </button>
-                    <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-4 border-2 border-emerald-500/40 mx-auto max-w-md">
+                    <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-4 border-2 border-emerald-500/40 mx-auto max-w-xs mb-4">
                       <div className="flex items-center justify-between">
                         <span className="text-emerald-200 font-bold text-base">Total</span>
                         <span className="text-4xl font-bold text-emerald-300 leading-none">
