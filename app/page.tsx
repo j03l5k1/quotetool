@@ -34,6 +34,12 @@ interface PipeLine {
   junctions: number;
 }
 
+interface ExtraItem {
+  id: string;
+  amount: number;
+  note: string;
+}
+
 // Pricing configuration - TODO: Make this configurable
 const PRICING = {
   '100mm': {
@@ -59,9 +65,7 @@ export default function Home() {
   const [pipeLines, setPipeLines] = useState<PipeLine[]>([]);
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
-  const [extraMaterials, setExtraMaterials] = useState(0);
-  const [materialsEnabled, setMaterialsEnabled] = useState(false);
-  const [materialsNote, setMaterialsNote] = useState('');
+  const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
 
   const handleFetchJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +96,7 @@ export default function Home() {
       meters: 10,
       junctions: 0,
     };
-    setPipeLines([...pipeLines, newLine]);
+    setPipeLines([newLine, ...pipeLines]); // Add to beginning
   };
 
   const removePipeLine = (id: string) => {
@@ -102,6 +106,25 @@ export default function Home() {
   const updatePipeLine = (id: string, field: keyof PipeLine, value: any) => {
     setPipeLines(pipeLines.map(line => 
       line.id === id ? { ...line, [field]: value } : line
+    ));
+  };
+
+  const addExtraItem = () => {
+    const newItem: ExtraItem = {
+      id: Date.now().toString(),
+      amount: 0,
+      note: '',
+    };
+    setExtraItems([newItem, ...extraItems]); // Add to beginning
+  };
+
+  const removeExtraItem = (id: string) => {
+    setExtraItems(extraItems.filter(item => item.id !== id));
+  };
+
+  const updateExtraItem = (id: string, field: keyof ExtraItem, value: any) => {
+    setExtraItems(extraItems.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
     ));
   };
 
@@ -117,8 +140,8 @@ export default function Home() {
 
   const pipeWorkTotal = pipeLines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
   const diggingTotal = diggingEnabled ? diggingHours * PRICING.diggingPerHour : 0;
-  const materialsTotal = materialsEnabled ? extraMaterials : 0;
-  const grandTotal = pipeWorkTotal + diggingTotal + materialsTotal;
+  const extrasTotal = extraItems.reduce((sum, item) => sum + item.amount, 0);
+  const grandTotal = pipeWorkTotal + diggingTotal + extrasTotal;
 
   return (
     <div className="min-h-screen bg-dark p-4 sm:p-6">
@@ -332,13 +355,17 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-white">Digging Required?</h3>
                       <button
                         onClick={() => setDiggingEnabled(!diggingEnabled)}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all text-base ${
+                        className={`relative w-16 h-9 rounded-full transition-all ${
                           diggingEnabled
-                            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
-                            : 'bg-dark-lighter border-2 border-gray-600 text-gray-400'
+                            ? 'bg-orange-500'
+                            : 'bg-gray-600'
                         }`}
                       >
-                        {diggingEnabled ? 'Yes' : 'No'}
+                        <span
+                          className={`absolute top-1 left-1 w-7 h-7 bg-white rounded-full transition-transform ${
+                            diggingEnabled ? 'translate-x-7' : 'translate-x-0'
+                          }`}
+                        />
                       </button>
                     </div>
 
@@ -378,49 +405,65 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Extra Materials Section */}
+                {/* Extras Section */}
                 <div className="mb-6">
                   <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl p-5 border-2 border-purple-500/30">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-white">Extra Materials?</h3>
+                      <h3 className="text-xl font-bold text-white">Extras</h3>
                       <button
-                        onClick={() => setMaterialsEnabled(!materialsEnabled)}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all text-base ${
-                          materialsEnabled
-                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
-                            : 'bg-dark-lighter border-2 border-gray-600 text-gray-400'
-                        }`}
+                        onClick={addExtraItem}
+                        className="px-5 py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-colors text-base"
                       >
-                        {materialsEnabled ? 'Yes' : 'No'}
+                        + Add Extra
                       </button>
                     </div>
 
-                    {materialsEnabled && (
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <label className="block text-gray-300 font-semibold mb-2 text-base">Amount</label>
-                          <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-xl font-bold">$</span>
-                            <input
-                              type="number"
-                              value={extraMaterials}
-                              onChange={(e) => setExtraMaterials(Math.max(0, Number(e.target.value)))}
-                              className="w-full bg-dark border-2 border-purple-500/30 rounded-lg pl-10 pr-4 py-3 text-white text-xl font-bold"
-                              min="0"
-                              step="10"
-                            />
+                    {extraItems.length === 0 ? (
+                      <div className="text-center py-8 bg-dark-lighter rounded-xl border-2 border-dashed border-gray-700">
+                        <p className="text-gray-400 text-base">No extras added</p>
+                        <p className="text-gray-500 text-sm mt-2">Materials, equipment, etc.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {extraItems.map((item, index) => (
+                          <div key={item.id} className="bg-dark-lighter rounded-xl p-4 border border-purple-500/30">
+                            <div className="flex items-start justify-between mb-3">
+                              <span className="text-purple-400 font-bold text-base">Extra {index + 1}</span>
+                              <button
+                                onClick={() => removeExtraItem(item.id)}
+                                className="text-red-400 hover:text-red-300 font-semibold px-3 py-1 border border-red-400/30 rounded-lg text-sm"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-gray-300 font-semibold mb-2 text-sm">Amount</label>
+                                <div className="relative">
+                                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-lg font-bold">$</span>
+                                  <input
+                                    type="number"
+                                    value={item.amount}
+                                    onChange={(e) => updateExtraItem(item.id, 'amount', Math.max(0, Number(e.target.value)))}
+                                    className="w-full bg-dark border-2 border-purple-500/30 rounded-lg pl-10 pr-4 py-3 text-white text-xl font-bold"
+                                    min="0"
+                                    step="10"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-gray-300 font-semibold mb-2 text-sm">Description</label>
+                                <textarea
+                                  value={item.note}
+                                  onChange={(e) => updateExtraItem(item.id, 'note', e.target.value)}
+                                  placeholder="What is this extra for?"
+                                  className="w-full bg-dark border-2 border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-gray-500 resize-none text-base"
+                                  rows={2}
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <label className="block text-gray-300 font-semibold mb-2 text-base">Note (optional)</label>
-                          <textarea
-                            value={materialsNote}
-                            onChange={(e) => setMaterialsNote(e.target.value)}
-                            placeholder="What materials are needed?"
-                            className="w-full bg-dark border-2 border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-gray-500 resize-none text-base"
-                            rows={3}
-                          />
-                        </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -441,10 +484,10 @@ export default function Home() {
                           <span className="font-bold">${diggingTotal.toLocaleString()}</span>
                         </div>
                       )}
-                      {materialsEnabled && extraMaterials > 0 && (
+                      {extraItems.length > 0 && extrasTotal > 0 && (
                         <div className="flex justify-between text-purple-300 text-lg">
-                          <span className="font-semibold">Extra Materials</span>
-                          <span className="font-bold">${materialsTotal.toLocaleString()}</span>
+                          <span className="font-semibold">Extras ({extraItems.length} item{extraItems.length !== 1 ? 's' : ''})</span>
+                          <span className="font-bold">${extrasTotal.toLocaleString()}</span>
                         </div>
                       )}
                     </div>
