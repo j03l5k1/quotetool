@@ -784,23 +784,23 @@ export default function Home() {
                 {/* Collapsed View */}
                 {summaryCollapsed ? (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => setSummaryCollapsed(false)}
-                        className="text-primary hover:text-white text-sm font-semibold transition-colors flex items-center gap-1.5"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                        Show full summary
-                      </button>
-                      <div className="flex items-end gap-2">
-                        <span className="text-white font-bold text-lg">Total</span>
-                        <span className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent leading-none">
+                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-300 font-semibold text-sm">Total</span>
+                        <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent leading-none">
                           ${grandTotal.toLocaleString()}
                         </span>
                       </div>
                     </div>
+                    <button
+                      onClick={() => setSummaryCollapsed(false)}
+                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                      Show full summary
+                    </button>
                   </div>
                 ) : (
                   <>
@@ -809,15 +809,6 @@ export default function Home() {
                       <h3 className="text-lg font-bold text-white">
                         Summary
                       </h3>
-                      <button
-                        onClick={() => setSummaryCollapsed(true)}
-                        className="text-primary hover:text-white text-xs font-semibold flex items-center gap-1"
-                      >
-                        Hide
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      </button>
                     </div>
                     
                     <div className="space-y-1.5 mb-3">
@@ -849,14 +840,24 @@ export default function Home() {
                       )}
                     </div>
                     
-                    <div className="pt-3 border-t-2 border-primary/30 mb-3">
-                      <div className="flex justify-between items-center">
+                    <div className="pt-3 border-t-2 border-primary/30 mb-4">
+                      <div className="flex justify-between items-center mb-3">
                         <span className="text-white font-bold text-lg">TOTAL</span>
                         <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent animate-pulse-slow">
                           ${grandTotal.toLocaleString()}
                         </span>
                       </div>
                     </div>
+
+                    <button
+                      onClick={() => setSummaryCollapsed(true)}
+                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 mb-3"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      Hide summary
+                    </button>
                   </>
                 )}
                 
