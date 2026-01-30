@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface JobContact {
   uuid: string;
@@ -16,6 +16,7 @@ interface JobData {
     uuid: string;
     job_address: string;
     generated_job_id: string;
+    job_description: string;
   };
   company: {
     uuid: string;
@@ -40,6 +41,16 @@ interface ExtraItem {
   note: string;
 }
 
+interface QuoteDraft {
+  jobNumber: string;
+  jobData: JobData | null;
+  pipeLines: PipeLine[];
+  diggingHours: number;
+  diggingEnabled: boolean;
+  extraItems: ExtraItem[];
+  timestamp: number;
+}
+
 // Pricing configuration - TODO: Make this configurable
 const PRICING = {
   '100mm': {
@@ -55,7 +66,14 @@ const PRICING = {
   diggingPerHour: 180,
 };
 
-// Simple inline SVG icons
+// Quick job presets
+const JOB_PRESETS = [
+  { name: 'Standard 20m', size: '100mm' as const, meters: 20, junctions: 2 },
+  { name: 'Standard 30m', size: '100mm' as const, meters: 30, junctions: 3 },
+  { name: 'Large 20m', size: '150mm' as const, meters: 20, junctions: 2 },
+];
+
+// Icons
 const Icons = {
   Plus: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,6 +111,31 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
+  Undo: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+    </svg>
+  ),
+  Check: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  ),
+  Info: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  Clock: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  Copy: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg>
+  ),
 };
 
 export default function Home() {
@@ -111,6 +154,48 @@ export default function Home() {
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
+
+  // UI state
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [undoStack, setUndoStack] = useState<PipeLine[]>([]);
+  const [showUndo, setShowUndo] = useState(false);
+  const [summaryCollapsed, setSummaryCollapsed] = useState(false);
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    if (jobData) {
+      const draft: QuoteDraft = {
+        jobNumber,
+        jobData,
+        pipeLines,
+        diggingHours,
+        diggingEnabled,
+        extraItems,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('quoteDraft', JSON.stringify(draft));
+      setLastSaved(new Date());
+    }
+  }, [jobNumber, jobData, pipeLines, diggingHours, diggingEnabled, extraItems]);
+
+  // Load draft on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('quoteDraft');
+    if (saved) {
+      const draft: QuoteDraft = JSON.parse(saved);
+      // Only restore if less than 24 hours old
+      if (Date.now() - draft.timestamp < 24 * 60 * 60 * 1000) {
+        setJobNumber(draft.jobNumber);
+        setJobData(draft.jobData);
+        setPipeLines(draft.pipeLines);
+        setDiggingHours(draft.diggingHours);
+        setDiggingEnabled(draft.diggingEnabled);
+        setExtraItems(draft.extraItems);
+        setLastSaved(new Date(draft.timestamp));
+      }
+    }
+  }, []);
 
   const handleFetchJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,13 +230,45 @@ export default function Home() {
   };
 
   const removePipeLine = (id: string) => {
+    const removed = pipeLines.find(line => line.id === id);
+    if (removed) {
+      setUndoStack([removed]);
+      setShowUndo(true);
+      setTimeout(() => setShowUndo(false), 5000);
+    }
     setPipeLines(pipeLines.filter(line => line.id !== id));
+  };
+
+  const undoRemove = () => {
+    if (undoStack.length > 0) {
+      setPipeLines([...undoStack, ...pipeLines]);
+      setUndoStack([]);
+      setShowUndo(false);
+    }
   };
 
   const updatePipeLine = (id: string, field: keyof PipeLine, value: any) => {
     setPipeLines(pipeLines.map(line => 
       line.id === id ? { ...line, [field]: value } : line
     ));
+  };
+
+  const duplicatePipeLine = (line: PipeLine) => {
+    const newLine: PipeLine = {
+      ...line,
+      id: Date.now().toString(),
+    };
+    setPipeLines([newLine, ...pipeLines]);
+  };
+
+  const applyPreset = (preset: typeof JOB_PRESETS[0]) => {
+    const newLine: PipeLine = {
+      id: Date.now().toString(),
+      size: preset.size,
+      meters: preset.meters,
+      junctions: preset.junctions,
+    };
+    setPipeLines([newLine]);
   };
 
   const addExtraItem = () => {
@@ -183,14 +300,27 @@ export default function Home() {
     );
   };
 
+  const getLineBreakdown = (line: PipeLine) => {
+    const pricing = PRICING[line.size];
+    return {
+      setup: pricing.setup,
+      meters: line.meters * pricing.perMeter,
+      junctions: line.junctions * pricing.perJunction,
+      total: calculateLineTotal(line),
+    };
+  };
+
   const pipeWorkTotal = pipeLines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
   const diggingTotal = diggingEnabled ? diggingHours * PRICING.diggingPerHour : 0;
   const extrasTotal = extraItems.reduce((sum, item) => sum + item.amount, 0);
   const grandTotal = pipeWorkTotal + diggingTotal + extrasTotal;
 
+  // Validation
+  const isValid = pipeLines.length > 0 && pipeLines.every(line => line.meters > 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e1a] via-[#0d1117] to-[#0a0e1a] p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0e1a] via-[#0d1117] to-[#0a0e1a] pb-32">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5 mb-5 backdrop-blur-sm">
@@ -203,48 +333,63 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
             Drainr Quote Tool
           </h1>
+
+          {/* Auto-save indicator */}
+          {lastSaved && (
+            <div className="flex items-center justify-center gap-2 text-gray-500 text-xs mt-2">
+              <Icons.Clock />
+              <span>Draft saved {Math.floor((Date.now() - lastSaved.getTime()) / 60000)}m ago</span>
+            </div>
+          )}
         </div>
 
         {/* Main Card */}
         <div className="bg-gradient-to-br from-dark-card/90 to-dark-card/70 backdrop-blur-xl rounded-3xl border border-gray-800/50 shadow-2xl p-5 sm:p-7">
           {/* Job Number Input */}
-          {!jobData && (
-            <form onSubmit={handleFetchJob}>
-              <label className="block text-white font-bold mb-4 text-base">
-                ServiceM8 Job Number
-              </label>
-              
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={jobNumber}
-                  onChange={(e) => setJobNumber(e.target.value)}
-                  placeholder="Enter job number..."
-                  className="flex-1 bg-dark-lighter/50 border border-gray-700/50 rounded-2xl px-5 py-4 text-white text-lg placeholder-gray-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                  required
-                />
+          {!jobData ? (
+            <>
+              <form onSubmit={handleFetchJob}>
+                <label className="block text-white font-bold mb-4 text-base">
+                  ServiceM8 Job Number
+                </label>
                 
-                <button
-                  type="submit"
-                  disabled={loading || !jobNumber}
-                  className="px-7 py-4 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed text-dark font-bold rounded-2xl transition-all duration-200 text-base shadow-lg shadow-primary/20 disabled:shadow-none"
-                >
-                  {loading ? 'Loading...' : 'Fetch'}
-                </button>
-              </div>
-            </form>
-          )}
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={jobNumber}
+                    onChange={(e) => setJobNumber(e.target.value)}
+                    placeholder="Enter job number..."
+                    inputMode="numeric"
+                    className="flex-1 bg-dark-lighter/50 border border-gray-700/50 rounded-2xl px-5 py-4 text-white text-lg placeholder-gray-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    required
+                    autoFocus
+                  />
+                  
+                  <button
+                    type="submit"
+                    disabled={loading || !jobNumber}
+                    className="px-7 py-4 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed text-dark font-bold rounded-2xl transition-all duration-200 text-base shadow-lg shadow-primary/20 disabled:shadow-none active:scale-95"
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-dark border-t-transparent rounded-full animate-spin" />
+                        Loading
+                      </div>
+                    ) : 'Fetch'}
+                  </button>
+                </div>
+              </form>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-5 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl backdrop-blur-sm">
-              <p className="text-red-400 font-medium">{error}</p>
-            </div>
-          )}
-
-          {/* Job Data Display */}
-          {jobData && (
-            <div className="space-y-6">
+              {/* Show draft resume option */}
+              {lastSaved && !jobData && (
+                <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-2xl">
+                  <p className="text-primary text-sm font-semibold">Continue where you left off?</p>
+                  <p className="text-gray-400 text-xs mt-1">Draft from {lastSaved.toLocaleTimeString()}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-6 animate-fadeIn">
               {/* Job Summary */}
               <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg shadow-primary/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
@@ -256,14 +401,25 @@ export default function Home() {
                       </span>
                     </div>
                     <p className="text-white font-bold text-lg mb-2">{jobData.company.name}</p>
-                    <div className="flex items-start gap-2 text-gray-300 text-sm">
+                    <div className="flex items-start gap-2 text-gray-300 text-sm mb-3">
                       <Icons.MapPin />
                       <p className="leading-relaxed">{jobData.job.job_address}</p>
                     </div>
+                    
+                    {/* Job Notes */}
+                    {jobData.job.job_description && (
+                      <div className="mt-3 pt-3 border-t border-primary/20">
+                        <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
+                        <p className="text-gray-300 text-sm">{jobData.job.job_description}</p>
+                      </div>
+                    )}
                   </div>
                   <button
-                    onClick={() => setJobData(null)}
-                    className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10"
+                    onClick={() => {
+                      setJobData(null);
+                      localStorage.removeItem('quoteDraft');
+                    }}
+                    className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95"
                   >
                     Change
                   </button>
@@ -276,6 +432,20 @@ export default function Home() {
                 Quote Details
               </h2>
 
+              {/* Quick Presets */}
+              <div className="flex gap-2 flex-wrap">
+                <span className="text-gray-400 text-sm font-semibold py-2">Quick:</span>
+                {JOB_PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    onClick={() => applyPreset(preset)}
+                    className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-semibold transition-all active:scale-95"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+
               {/* Pipe Lines */}
               <div>
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg">
@@ -285,137 +455,182 @@ export default function Home() {
                         <Icons.Pipette />
                       </div>
                       <h3 className="text-lg font-bold text-white">Pipe Work</h3>
+                      {pipeLines.length > 0 && (
+                        <span className="px-2 py-0.5 bg-primary/20 rounded-full text-primary text-xs font-bold">
+                          <Icons.Check />
+                        </span>
+                      )}
                     </div>
                     <button
                       onClick={addPipeLine}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30 active:scale-95"
                     >
                       <Icons.Plus />
                       Add Line
                     </button>
                   </div>
 
-                  {pipeLines.length === 0 ? (
-                    <div className="text-center py-10 border-t border-primary/10">
-                      <p className="text-gray-400 text-sm font-medium">No pipe lines yet</p>
-                      <p className="text-gray-500 text-xs mt-1">Tap &ldquo;Add Line&rdquo; to start</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 mt-5">
-                      {[...pipeLines].reverse().map((line, index) => (
-                        <div key={line.id} className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-700/50 shadow-xl">
-                          <div className="flex items-center justify-between mb-5">
-                            <span className="px-3 py-1.5 bg-primary/20 border border-primary/30 rounded-lg text-primary text-sm font-bold">
-                              Line {pipeLines.length - index}
-                            </span>
+                  <div className="space-y-3">
+                    {[...pipeLines].reverse().map((line, index) => (
+                      <div 
+                        key={line.id} 
+                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-700/50 shadow-xl animate-slideIn"
+                      >
+                        <div className="flex items-center justify-between mb-5">
+                          <span className="px-3 py-1.5 bg-primary/20 border border-primary/30 rounded-lg text-primary text-sm font-bold">
+                            Line {pipeLines.length - index}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => duplicatePipeLine(line)}
+                              className="flex items-center gap-1.5 text-primary hover:text-white font-semibold text-xs px-3 py-1.5 border border-primary/30 hover:border-primary/50 rounded-lg transition-all hover:bg-primary/10 active:scale-95"
+                              title="Duplicate this line"
+                            >
+                              <Icons.Copy />
+                              Copy
+                            </button>
                             <button
                               onClick={() => removePipeLine(line.id)}
-                              className="flex items-center gap-1.5 text-red-400 hover:text-red-300 font-semibold text-xs px-3 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10"
+                              className="flex items-center gap-1.5 text-red-400 hover:text-red-300 font-semibold text-xs px-3 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
                             >
                               <Icons.X />
                               Remove
                             </button>
                           </div>
+                        </div>
 
-                          {/* Pipe Size */}
-                          <div className="mb-5">
-                            <label className="block text-gray-300 font-semibold mb-3 text-sm">Pipe Size</label>
-                            <div className="grid grid-cols-2 gap-3">
-                              <button
-                                type="button"
-                                onClick={() => updatePipeLine(line.id, 'size', '100mm')}
-                                className={`py-4 rounded-xl font-bold transition-all text-base relative overflow-hidden ${
-                                  line.size === '100mm'
-                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                    : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
-                                }`}
-                              >
-                                <div className="font-bold">100mm</div>
-                                <div className="text-xs font-normal opacity-80 mt-0.5">Standard</div>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => updatePipeLine(line.id, 'size', '150mm')}
-                                className={`py-4 rounded-xl font-bold transition-all text-base relative overflow-hidden ${
-                                  line.size === '150mm'
-                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                    : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
-                                }`}
-                              >
-                                <div className="font-bold">150mm</div>
-                                <div className="text-xs font-normal opacity-80 mt-0.5">Multi-dwelling</div>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Meters Slider */}
-                          <div className="mb-5">
-                            <div className="flex items-center justify-between mb-3">
-                              <label className="text-gray-300 font-semibold text-sm">Meters</label>
-                              <input
-                                type="number"
-                                value={line.meters}
-                                onChange={(e) => updatePipeLine(line.id, 'meters', Math.max(0, Math.min(50, Number(e.target.value))))}
-                                className="w-20 bg-dark-lighter/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-base text-right font-bold focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:outline-none"
-                                min="0"
-                                max="50"
-                              />
-                            </div>
-                            <div className="relative">
-                              <input
-                                type="range"
-                                min="0"
-                                max="50"
-                                step="0.5"
-                                value={line.meters}
-                                onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
-                                className="w-full h-2 bg-gray-700/50 rounded-full appearance-none cursor-pointer"
-                                style={{
-                                  background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Junctions Counter */}
-                          <div className="mb-5">
-                            <label className="block text-gray-300 font-semibold mb-3 text-sm">Junctions</label>
-                            <div className="flex items-center gap-4">
-                              <button
-                                type="button"
-                                onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
-                                className="w-12 h-12 bg-dark-lighter/50 border border-gray-600/50 hover:border-primary/50 rounded-xl text-white font-bold text-xl transition-all hover:bg-primary/10"
-                              >
-                                −
-                              </button>
-                              <div className="flex-1 text-center">
-                                <span className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-                                  {line.junctions}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
-                                className="w-12 h-12 bg-dark-lighter/50 border border-gray-600/50 hover:border-primary/50 rounded-xl text-white font-bold text-xl transition-all hover:bg-primary/10"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Line Total */}
-                          <div className="pt-4 border-t border-gray-700/50">
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-400 font-semibold text-sm">Line Total</span>
-                              <span className="text-primary font-bold text-2xl">
-                                ${calculateLineTotal(line).toLocaleString()}
-                              </span>
-                            </div>
+                        {/* Pipe Size */}
+                        <div className="mb-5">
+                          <label className="block text-gray-300 font-semibold mb-3 text-sm">Pipe Size</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => updatePipeLine(line.id, 'size', '100mm')}
+                              className={`py-4 rounded-xl font-bold transition-all text-base relative overflow-hidden active:scale-95 ${
+                                line.size === '100mm'
+                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
+                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                              }`}
+                            >
+                              <div className="font-bold">100mm</div>
+                              <div className="text-xs font-normal opacity-80 mt-0.5">Standard</div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePipeLine(line.id, 'size', '150mm')}
+                              className={`py-4 rounded-xl font-bold transition-all text-base relative overflow-hidden active:scale-95 ${
+                                line.size === '150mm'
+                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
+                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                              }`}
+                            >
+                              <div className="font-bold">150mm</div>
+                              <div className="text-xs font-normal opacity-80 mt-0.5">Multi-dwelling</div>
+                            </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+
+                        {/* Meters Slider */}
+                        <div className="mb-5">
+                          <div className="flex items-center justify-between mb-3">
+                            <label className="text-gray-300 font-semibold text-sm">Meters</label>
+                            <input
+                              type="number"
+                              value={line.meters}
+                              onChange={(e) => updatePipeLine(line.id, 'meters', Math.max(0, Math.min(50, Number(e.target.value))))}
+                              inputMode="decimal"
+                              className="w-20 bg-dark-lighter/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-base text-right font-bold focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                              min="0"
+                              max="50"
+                              step="0.5"
+                            />
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="range"
+                              min="0"
+                              max="50"
+                              step="0.5"
+                              value={line.meters}
+                              onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
+                              className="w-full h-2 bg-gray-700/50 rounded-full appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Junctions Counter */}
+                        <div className="mb-5">
+                          <label className="block text-gray-300 font-semibold mb-3 text-sm">Junctions</label>
+                          <div className="flex items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
+                              className="w-12 h-12 bg-dark-lighter/50 border border-gray-600/50 hover:border-primary/50 rounded-xl text-white font-bold text-xl transition-all hover:bg-primary/10 active:scale-90"
+                            >
+                              −
+                            </button>
+                            <div className="flex-1 text-center">
+                              <span className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                                {line.junctions}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
+                              className="w-12 h-12 bg-dark-lighter/50 border border-gray-600/50 hover:border-primary/50 rounded-xl text-white font-bold text-xl transition-all hover:bg-primary/10 active:scale-90"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Line Total with Breakdown */}
+                        <div className="pt-4 border-t border-gray-700/50">
+                          <button
+                            onClick={() => setShowBreakdown(!showBreakdown)}
+                            className="w-full flex justify-between items-center group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400 font-semibold text-sm">Line Total</span>
+                              <Icons.Info />
+                            </div>
+                            <span className="text-primary font-bold text-2xl group-hover:scale-105 transition-transform">
+                              ${calculateLineTotal(line).toLocaleString()}
+                            </span>
+                          </button>
+                          
+                          {showBreakdown && (
+                            <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-2 text-sm animate-slideIn">
+                              {(() => {
+                                const breakdown = getLineBreakdown(line);
+                                return (
+                                  <>
+                                    <div className="flex justify-between text-gray-400">
+                                      <span>Setup</span>
+                                      <span>${breakdown.setup.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-400">
+                                      <span>{line.meters}m × ${PRICING[line.size].perMeter}/m</span>
+                                      <span>${breakdown.meters.toLocaleString()}</span>
+                                    </div>
+                                    {line.junctions > 0 && (
+                                      <div className="flex justify-between text-gray-400">
+                                        <span>{line.junctions} junction{line.junctions !== 1 ? 's' : ''} × ${PRICING[line.size].perJunction}</span>
+                                        <span>${breakdown.junctions.toLocaleString()}</span>
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -428,10 +643,15 @@ export default function Home() {
                         <Icons.Shovel />
                       </div>
                       <h3 className="text-lg font-bold text-white">Digging Required?</h3>
+                      {diggingEnabled && diggingHours > 0 && (
+                        <span className="px-2 py-0.5 bg-orange-500/20 rounded-full text-orange-400 text-xs font-bold">
+                          <Icons.Check />
+                        </span>
+                      )}
                     </div>
                     <button
                       onClick={() => setDiggingEnabled(!diggingEnabled)}
-                      className={`relative w-14 h-8 rounded-full transition-all shadow-inner ${
+                      className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${
                         diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
                       }`}
                     >
@@ -444,13 +664,14 @@ export default function Home() {
                   </div>
 
                   {diggingEnabled && (
-                    <div className="mt-5 space-y-4 pt-5 border-t border-orange-500/20">
+                    <div className="mt-5 space-y-4 pt-5 border-t border-orange-500/20 animate-slideIn">
                       <div className="flex items-center justify-between mb-3">
                         <label className="text-gray-300 font-semibold text-sm">Hours</label>
                         <input
                           type="number"
                           value={diggingHours}
                           onChange={(e) => setDiggingHours(Math.max(0, Number(e.target.value)))}
+                          inputMode="decimal"
                           className="w-20 bg-dark-lighter/50 border border-orange-500/30 rounded-lg px-3 py-2 text-white text-base text-right font-bold focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 focus:outline-none"
                           min="0"
                           step="0.5"
@@ -483,7 +704,7 @@ export default function Home() {
               {extraItems.length === 0 ? (
                 <button
                   onClick={addExtraItem}
-                  className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-5 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all"
+                  className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-5 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all active:scale-95"
                 >
                   <div className="flex items-center justify-center gap-3">
                     <div className="p-2 bg-purple-500/20 rounded-xl">
@@ -503,10 +724,15 @@ export default function Home() {
                           <Icons.Package />
                         </div>
                         <h3 className="text-lg font-bold text-white">Extras</h3>
+                        {extraItems.length > 0 && extrasTotal > 0 && (
+                          <span className="px-2 py-0.5 bg-purple-500/20 rounded-full text-purple-400 text-xs font-bold">
+                            <Icons.Check />
+                          </span>
+                        )}
                       </div>
                       <button
                         onClick={addExtraItem}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30 active:scale-95"
                       >
                         <Icons.Plus />
                         Add Extra
@@ -515,14 +741,14 @@ export default function Home() {
 
                     <div className="space-y-3 mt-5">
                       {[...extraItems].reverse().map((item, index) => (
-                        <div key={item.id} className="bg-dark-lighter/50 backdrop-blur-sm rounded-2xl p-4 border border-purple-500/30">
+                        <div key={item.id} className="bg-dark-lighter/50 backdrop-blur-sm rounded-2xl p-4 border border-purple-500/30 animate-slideIn">
                           <div className="flex items-center justify-between mb-4">
                             <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-400 text-sm font-bold">
                               Extra {extraItems.length - index}
                             </span>
                             <button
                               onClick={() => removeExtraItem(item.id)}
-                              className="flex items-center gap-1.5 text-red-400 hover:text-red-300 font-semibold text-xs px-3 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10"
+                              className="flex items-center gap-1.5 text-red-400 hover:text-red-300 font-semibold text-xs px-3 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
                             >
                               <Icons.X />
                               Remove
@@ -537,6 +763,7 @@ export default function Home() {
                                   type="number"
                                   value={item.amount}
                                   onChange={(e) => updateExtraItem(item.id, 'amount', Math.max(0, Number(e.target.value)))}
+                                  inputMode="numeric"
                                   className="w-full bg-dark-lighter/50 border border-purple-500/30 rounded-xl pl-10 pr-4 py-3 text-white text-xl font-bold focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
                                   min="0"
                                   step="10"
@@ -560,62 +787,164 @@ export default function Home() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* Quote Summary */}
-              {pipeLines.length > 0 && (
-                <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-3xl p-7 shadow-2xl shadow-primary/20">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-dark/10 rounded-full blur-3xl" />
-                  
-                  <div className="relative">
-                    <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                      <div className="p-2 bg-primary/20 rounded-xl">
-                        <Icons.FileText />
-                      </div>
-                      Quote Summary
-                    </h3>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-5 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl backdrop-blur-sm animate-shake">
+              <p className="text-red-400 font-medium">{error}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sticky Summary Footer */}
+      {jobData && pipeLines.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent pt-4 pb-safe z-50 animate-slideUp">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-primary/20 backdrop-blur-xl">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+              
+              <div className="relative">
+                {/* Collapsed View */}
+                {summaryCollapsed ? (
+                  <button
+                    onClick={() => setSummaryCollapsed(false)}
+                    className="w-full flex items-center justify-between"
+                  >
+                    <span className="text-white font-bold text-lg">Quote Total</span>
+                    <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
+                      ${grandTotal.toLocaleString()}
+                    </span>
+                  </button>
+                ) : (
+                  <>
+                    {/* Expanded View */}
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        Quote Summary
+                      </h3>
+                      <button
+                        onClick={() => setSummaryCollapsed(true)}
+                        className="text-gray-400 hover:text-white text-sm"
+                      >
+                        Collapse
+                      </button>
+                    </div>
                     
-                    <div className="space-y-3 mb-6">
-                      <div className="flex justify-between text-gray-200 text-base bg-white/5 backdrop-blur-sm rounded-xl p-3">
-                        <span className="font-semibold">Pipe Work ({pipeLines.length} line{pipeLines.length !== 1 ? 's' : ''})</span>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-gray-200 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                        <span className="font-semibold">Pipe Work ({pipeLines.length})</span>
                         <span className="font-bold">${pipeWorkTotal.toLocaleString()}</span>
                       </div>
                       {diggingEnabled && diggingHours > 0 && (
-                        <div className="flex justify-between text-orange-300 text-base bg-white/5 backdrop-blur-sm rounded-xl p-3">
+                        <div className="flex justify-between text-orange-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
                           <span className="font-semibold">Digging ({diggingHours}h)</span>
                           <span className="font-bold">${diggingTotal.toLocaleString()}</span>
                         </div>
                       )}
                       {extraItems.length > 0 && extrasTotal > 0 && (
-                        <div className="flex justify-between text-purple-300 text-base bg-white/5 backdrop-blur-sm rounded-xl p-3">
-                          <span className="font-semibold">Extras ({extraItems.length} item{extraItems.length !== 1 ? 's' : ''})</span>
+                        <div className="flex justify-between text-purple-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
+                          <span className="font-semibold">Extras ({extraItems.length})</span>
                           <span className="font-bold">${extrasTotal.toLocaleString()}</span>
                         </div>
                       )}
                     </div>
                     
-                    <div className="pt-6 border-t-2 border-primary/30 mb-6">
+                    <div className="pt-4 border-t-2 border-primary/30 mb-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-white font-bold text-2xl">TOTAL</span>
-                        <span className="text-5xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
+                        <span className="text-white font-bold text-xl">TOTAL</span>
+                        <span className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent animate-pulse-slow">
                           ${grandTotal.toLocaleString()}
                         </span>
                       </div>
                     </div>
-                    
-                    <button
-                      className="w-full py-5 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark text-dark font-bold text-xl rounded-2xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98]"
-                      onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
-                    >
-                      Generate Quote
-                    </button>
-                  </div>
-                </div>
-              )}
+                  </>
+                )}
+                
+                <button
+                  disabled={!isValid}
+                  className="w-full py-4 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-lg rounded-2xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none"
+                  onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
+                >
+                  Generate Quote
+                </button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Undo Toast */}
+      {showUndo && (
+        <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp">
+          <div className="flex items-center gap-4">
+            <span className="text-white text-sm font-medium">Line removed</span>
+            <button
+              onClick={undoRemove}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-all text-sm active:scale-95"
+            >
+              <Icons.Undo />
+              Undo
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
+        }
+        @keyframes pulseSlow {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+        .animate-pulse-slow {
+          animation: pulseSlow 2s ease-in-out infinite;
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+      `}</style>
     </div>
   );
 }
