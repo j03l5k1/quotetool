@@ -331,8 +331,8 @@ export default function Home() {
           {/* Job Number Input */}
           {!jobData ? (
             <>
-              <form onSubmit={handleFetchJob}>
-                <label className="block text-white font-bold mb-4 text-base">
+              <form onSubmit={handleFetchJob} className="space-y-4">
+                <label className="block text-white font-bold mb-3 text-base">
                   ServiceM8 Job Number
                 </label>
                 
@@ -343,7 +343,7 @@ export default function Home() {
                     onChange={(e) => setJobNumber(e.target.value)}
                     placeholder="Enter job number..."
                     inputMode="numeric"
-                    className="flex-1 bg-dark-lighter/50 border border-gray-700/50 rounded-2xl px-5 py-4 text-white text-lg placeholder-gray-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="flex-1 bg-dark-lighter/50 border border-gray-700/50 rounded-xl px-4 py-3.5 text-white text-base placeholder-gray-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                     required
                     autoFocus
                   />
@@ -351,12 +351,12 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={loading || !jobNumber}
-                    className="px-7 py-4 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed text-dark font-bold rounded-2xl transition-all duration-200 text-base shadow-lg shadow-primary/20 disabled:shadow-none active:scale-95"
+                    className="px-6 py-3.5 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed text-dark font-bold rounded-xl transition-all duration-200 text-base shadow-lg shadow-primary/20 disabled:shadow-none active:scale-95 whitespace-nowrap"
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-dark border-t-transparent rounded-full animate-spin" />
-                        Loading
+                        <span>Loading</span>
                       </div>
                     ) : 'Fetch'}
                   </button>
@@ -411,31 +411,31 @@ export default function Home() {
 
               <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
 
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent mb-4">
                 Quote Details
               </h2>
 
               {/* Pipe Lines */}
-              <div>
+              <div className="mb-6">
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20 shadow-lg">
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/20 rounded-xl">
+                  <div className="flex items-center justify-between mb-4 gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="p-1.5 bg-primary/20 rounded-lg flex-shrink-0">
                         <Icons.Pipette />
                       </div>
-                      <h3 className="text-lg font-bold text-white">Pipe Work</h3>
+                      <h3 className="text-base font-bold text-white truncate">Pipe Work</h3>
                       {pipeLines.length > 0 && (
-                        <span className="px-2 py-0.5 bg-primary/20 rounded-full text-primary text-xs font-bold">
+                        <span className="p-1 bg-primary/20 rounded-full flex-shrink-0">
                           <Icons.Check />
                         </span>
                       )}
                     </div>
                     <button
                       onClick={addPipeLine}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30 active:scale-95"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30 active:scale-95 whitespace-nowrap flex-shrink-0"
                     >
                       <Icons.Plus />
-                      Add Line
+                      <span>Add Line</span>
                     </button>
                   </div>
 
@@ -443,35 +443,35 @@ export default function Home() {
                     {[...pipeLines].reverse().map((line, index) => (
                       <div 
                         key={line.id} 
-                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-700/50 shadow-xl animate-slideIn"
+                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-xl animate-slideIn"
                       >
-                        <div className="flex items-center justify-between mb-5">
-                          <span className="px-3 py-1.5 bg-primary/20 border border-primary/30 rounded-lg text-primary text-sm font-bold">
+                        <div className="flex items-center justify-between mb-4 gap-2">
+                          <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-sm font-bold whitespace-nowrap">
                             Line {pipeLines.length - index}
                           </span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                               onClick={() => duplicatePipeLine(line)}
-                              className="flex items-center gap-1.5 text-primary hover:text-white font-semibold text-xs px-3 py-1.5 border border-primary/30 hover:border-primary/50 rounded-lg transition-all hover:bg-primary/10 active:scale-95"
+                              className="flex items-center gap-1 text-primary hover:text-white font-semibold text-xs px-2.5 py-1.5 border border-primary/30 hover:border-primary/50 rounded-lg transition-all hover:bg-primary/10 active:scale-95"
                               title="Duplicate this line"
                             >
                               <Icons.Copy />
-                              Copy
+                              <span className="hidden sm:inline">Copy</span>
                             </button>
                             <button
                               onClick={() => removePipeLine(line.id)}
-                              className="flex items-center gap-1.5 text-red-400 hover:text-red-300 font-semibold text-xs px-3 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
+                              className="flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold text-xs px-2.5 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
                             >
                               <Icons.X />
-                              Remove
+                              <span className="hidden sm:inline">Remove</span>
                             </button>
                           </div>
                         </div>
 
                         {/* Pipe Size */}
-                        <div className="mb-5">
-                          <label className="block text-gray-300 font-semibold mb-3 text-sm">Pipe Size</label>
-                          <div className="grid grid-cols-2 gap-3">
+                        <div className="mb-4">
+                          <label className="block text-gray-300 font-semibold mb-2 text-sm">Pipe Size</label>
+                          <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
                               onClick={() => updatePipeLine(line.id, 'size', '100mm')}
@@ -500,8 +500,8 @@ export default function Home() {
                         </div>
 
                         {/* Meters Slider */}
-                        <div className="mb-5">
-                          <div className="flex items-center justify-between mb-3">
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
                             <label className="text-gray-300 font-semibold text-sm">Meters</label>
                             <input
                               type="number"
@@ -531,8 +531,8 @@ export default function Home() {
                         </div>
 
                         {/* Junctions Counter */}
-                        <div className="mb-5">
-                          <label className="block text-gray-300 font-semibold mb-3 text-sm">Junctions</label>
+                        <div className="mb-4">
+                          <label className="block text-gray-300 font-semibold mb-2 text-sm">Junctions</label>
                           <div className="flex items-center gap-4">
                             <button
                               type="button"
@@ -604,16 +604,16 @@ export default function Home() {
               </div>
 
               {/* Digging Section */}
-              <div>
+              <div className="mb-6">
                 <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl p-4 border border-orange-500/20 shadow-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-500/20 rounded-xl">
+                  <div className="flex items-center justify-between mb-4 gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="p-1.5 bg-orange-500/20 rounded-lg flex-shrink-0">
                         <Icons.Shovel />
                       </div>
-                      <h3 className="text-lg font-bold text-white">Digging Required?</h3>
+                      <h3 className="text-base font-bold text-white truncate">Digging Required?</h3>
                       {diggingEnabled && diggingHours > 0 && (
-                        <span className="px-2 py-0.5 bg-orange-500/20 rounded-full text-orange-400 text-xs font-bold">
+                        <span className="p-1 bg-orange-500/20 rounded-full flex-shrink-0">
                           <Icons.Check />
                         </span>
                       )}
@@ -675,36 +675,36 @@ export default function Home() {
                   onClick={addExtraItem}
                   className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-4 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all active:scale-95"
                 >
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="p-2 bg-purple-500/20 rounded-xl">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="p-1.5 bg-purple-500/20 rounded-lg">
                       <Icons.Package />
                     </div>
-                    <h3 className="text-lg font-bold text-white">Add Extras</h3>
+                    <h3 className="text-base font-bold text-white">Add Extras</h3>
                     <Icons.Plus />
                   </div>
                   <p className="text-gray-400 text-sm mt-2">Materials, equipment, etc.</p>
                 </button>
               ) : (
-                <div>
+                <div className="mb-6">
                   <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl p-4 border border-purple-500/20 shadow-lg">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-xl">
+                    <div className="flex items-center justify-between mb-4 gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="p-1.5 bg-purple-500/20 rounded-lg flex-shrink-0">
                           <Icons.Package />
                         </div>
-                        <h3 className="text-lg font-bold text-white">Extras</h3>
+                        <h3 className="text-base font-bold text-white truncate">Extras</h3>
                         {extraItems.length > 0 && extrasTotal > 0 && (
-                          <span className="px-2 py-0.5 bg-purple-500/20 rounded-full text-purple-400 text-xs font-bold">
+                          <span className="p-1 bg-purple-500/20 rounded-full flex-shrink-0">
                             <Icons.Check />
                           </span>
                         )}
                       </div>
                       <button
                         onClick={addExtraItem}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30 active:scale-95"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30 active:scale-95 whitespace-nowrap flex-shrink-0"
                       >
                         <Icons.Plus />
-                        Add Extra
+                        <span>Add Extra</span>
                       </button>
                     </div>
 
