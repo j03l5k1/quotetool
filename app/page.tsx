@@ -480,30 +480,39 @@ export default function Home() {
               </div>
 
               {/* Extras Section */}
-              <div>
-                <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl p-5 border border-purple-500/20 shadow-lg">
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-500/20 rounded-xl">
-                        <Icons.Package />
-                      </div>
-                      <h3 className="text-lg font-bold text-white">Extras</h3>
+              {extraItems.length === 0 ? (
+                <button
+                  onClick={addExtraItem}
+                  className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-5 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all"
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="p-2 bg-purple-500/20 rounded-xl">
+                      <Icons.Package />
                     </div>
-                    <button
-                      onClick={addExtraItem}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30"
-                    >
-                      <Icons.Plus />
-                      Add Extra
-                    </button>
+                    <h3 className="text-lg font-bold text-white">Add Extras</h3>
+                    <Icons.Plus />
                   </div>
-
-                  {extraItems.length === 0 ? (
-                    <div className="text-center py-10 border-t border-purple-500/10">
-                      <p className="text-gray-400 text-sm font-medium">No extras yet</p>
-                      <p className="text-gray-500 text-xs mt-1">Materials, equipment, etc.</p>
+                  <p className="text-gray-400 text-sm mt-2">Materials, equipment, etc.</p>
+                </button>
+              ) : (
+                <div>
+                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl p-5 border border-purple-500/20 shadow-lg">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/20 rounded-xl">
+                          <Icons.Package />
+                        </div>
+                        <h3 className="text-lg font-bold text-white">Extras</h3>
+                      </div>
+                      <button
+                        onClick={addExtraItem}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30"
+                      >
+                        <Icons.Plus />
+                        Add Extra
+                      </button>
                     </div>
-                  ) : (
+
                     <div className="space-y-3 mt-5">
                       {[...extraItems].reverse().map((item, index) => (
                         <div key={item.id} className="bg-dark-lighter/50 backdrop-blur-sm rounded-2xl p-4 border border-purple-500/30">
@@ -548,9 +557,9 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Quote Summary */}
               {pipeLines.length > 0 && (
