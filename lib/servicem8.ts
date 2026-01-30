@@ -5,6 +5,7 @@ export interface ServiceM8Job {
   uuid: string;
   job_address: string;
   generated_job_id: string;
+  company_uuid: string;
 }
 
 export interface ServiceM8Company {
@@ -28,15 +29,16 @@ export class ServiceM8Client {
   }
 
   private async request<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${SERVICEM8_API_BASE}${endpoint}.json`, {
+    const response = await fetch(`${SERVICEM8_API_BASE}${endpoint}`, {
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${this.apiKey}:x`).toString('base64')}`,
+        'X-API-Key': this.apiKey,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`ServiceM8 API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`ServiceM8 API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     return response.json();
@@ -54,16 +56,13 @@ export class ServiceM8Client {
   }
 
   async getCompany(companyUuid: string): Promise<ServiceM8Company> {
-    const companies = await this.request<ServiceM8Company[]>(`/company/${companyUuid}.json`);
-    return companies[0];
+    const company = await this.request<ServiceM8Company>(`/company/${companyUuid}.json`);
+    return company;
   }
 
   async getJobData(jobNumber: string): Promise<JobData> {
     const job = await this.getJob(jobNumber);
-    
-    // Get company details from the job
-    const companyUuid = (job as any).company_uuid;
-    const company = await this.getCompany(companyUuid);
+    const company = await this.getCompany(job.company_uuid);
 
     return {
       job,
