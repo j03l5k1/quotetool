@@ -2,6 +2,15 @@
 
 import { useState } from 'react';
 
+interface JobContact {
+  uuid: string;
+  first: string;
+  last: string;
+  email: string;
+  mobile: string;
+  phone: string;
+}
+
 interface JobData {
   job: {
     uuid: string;
@@ -15,6 +24,7 @@ interface JobData {
     email: string;
     address: string;
   };
+  contact: JobContact | null;
 }
 
 export default function Home() {
@@ -125,23 +135,36 @@ export default function Home() {
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
-                    <p className="text-gray-400 text-sm mb-1">Name</p>
+                    <p className="text-gray-400 text-sm mb-1">Company Name</p>
                     <p className="text-white font-semibold">{jobData.company.name}</p>
                   </div>
                   
-                  <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
-                    <p className="text-gray-400 text-sm mb-1">Email</p>
-                    <p className="text-white font-semibold">{jobData.company.email}</p>
-                  </div>
+                  {jobData.contact && (
+                    <>
+                      <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
+                        <p className="text-gray-400 text-sm mb-1">Contact Name</p>
+                        <p className="text-white font-semibold">
+                          {jobData.contact.first} {jobData.contact.last}
+                        </p>
+                      </div>
+                      
+                      <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
+                        <p className="text-gray-400 text-sm mb-1">Email</p>
+                        <p className="text-white font-semibold">{jobData.contact.email || 'N/A'}</p>
+                      </div>
+                      
+                      <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
+                        <p className="text-gray-400 text-sm mb-1">Phone</p>
+                        <p className="text-white font-semibold">
+                          {jobData.contact.mobile || jobData.contact.phone || 'N/A'}
+                        </p>
+                      </div>
+                    </>
+                  )}
                   
-                  <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
-                    <p className="text-gray-400 text-sm mb-1">Phone</p>
-                    <p className="text-white font-semibold">{jobData.company.phone}</p>
-                  </div>
-                  
-                  <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700">
+                  <div className="bg-dark-lighter rounded-lg p-4 border border-gray-700 sm:col-span-2">
                     <p className="text-gray-400 text-sm mb-1">Address</p>
-                    <p className="text-white font-semibold">{jobData.company.address}</p>
+                    <p className="text-white font-semibold">{jobData.company.address || jobData.job.job_address}</p>
                   </div>
                 </div>
               </div>
