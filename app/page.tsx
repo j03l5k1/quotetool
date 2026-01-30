@@ -66,12 +66,6 @@ const PRICING = {
   diggingPerHour: 180,
 };
 
-// Quick job presets
-const JOB_PRESETS = [
-  { name: 'Standard 20m', size: '100mm' as const, meters: 20, junctions: 2 },
-  { name: 'Standard 30m', size: '100mm' as const, meters: 30, junctions: 3 },
-  { name: 'Large 20m', size: '150mm' as const, meters: 20, junctions: 2 },
-];
 
 // Icons
 const Icons = {
