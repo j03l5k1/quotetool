@@ -239,10 +239,10 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {pipeLines.map((line, index) => (
+                      {[...pipeLines].reverse().map((line, index) => (
                         <div key={line.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-5 border border-gray-700">
                           <div className="flex items-start justify-between mb-4">
-                            <span className="text-primary font-bold text-lg">Line {index + 1}</span>
+                            <span className="text-primary font-bold text-lg">Line {pipeLines.length - index}</span>
                             <button
                               onClick={() => removePipeLine(line.id)}
                               className="text-red-400 hover:text-red-300 font-semibold px-3 py-1 border border-red-400/30 rounded-lg"
