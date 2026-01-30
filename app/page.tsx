@@ -376,36 +376,56 @@ export default function Home() {
               {/* Job Summary */}
               <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg shadow-primary/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-                <div className="relative flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-bold">
-                        #{jobData.job.generated_job_id}
-                      </span>
-                    </div>
-                    <p className="text-white font-bold text-lg mb-2">{jobData.company.name}</p>
-                    <div className="flex items-start gap-2 text-gray-300 text-sm mb-3">
-                      <Icons.MapPin />
-                      <p className="leading-relaxed">{jobData.job.job_address}</p>
-                    </div>
-                    
-                    {/* Job Notes */}
-                    {jobData.job.job_description && (
-                      <div className="mt-3 pt-3 border-t border-primary/20">
-                        <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
-                        <p className="text-gray-300 text-sm">{jobData.job.job_description}</p>
+                <div className="relative">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-bold">
+                          #{jobData.job.generated_job_id}
+                        </span>
                       </div>
-                    )}
+                      <p className="text-white font-bold text-lg mb-2">{jobData.company.name}</p>
+                      <div className="flex items-start gap-2 text-gray-300 text-sm mb-3">
+                        <Icons.MapPin />
+                        <p className="leading-relaxed">{jobData.job.job_address}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setJobData(null);
+                        localStorage.removeItem('quoteDraft');
+                      }}
+                      className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95 flex-shrink-0"
+                    >
+                      Change
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      setJobData(null);
-                      localStorage.removeItem('quoteDraft');
-                    }}
-                    className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95"
-                  >
-                    Change
-                  </button>
+
+                  {/* Contact Info */}
+                  {jobData.contact && (
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-primary/20">
+                      {jobData.contact.email && (
+                        <div className="bg-primary/10 rounded-lg p-2">
+                          <p className="text-primary/60 text-xs font-semibold mb-0.5">Email</p>
+                          <p className="text-gray-200 text-xs truncate">{jobData.contact.email}</p>
+                        </div>
+                      )}
+                      {(jobData.contact.mobile || jobData.contact.phone) && (
+                        <div className="bg-primary/10 rounded-lg p-2">
+                          <p className="text-primary/60 text-xs font-semibold mb-0.5">Phone</p>
+                          <p className="text-gray-200 text-xs">{jobData.contact.mobile || jobData.contact.phone}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Job Notes */}
+                  {jobData.job.job_description && (
+                    <div className="mt-3 pt-3 border-t border-primary/20">
+                      <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
+                      <p className="text-gray-300 text-sm">{jobData.job.job_description}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -423,12 +443,7 @@ export default function Home() {
                       <div className="p-1.5 bg-primary/20 rounded-lg flex-shrink-0">
                         <Icons.Pipette />
                       </div>
-                      <h3 className="text-base font-bold text-white truncate">Pipe Work</h3>
-                      {pipeLines.length > 0 && (
-                        <span className="p-1 bg-primary/20 rounded-full flex-shrink-0">
-                          <Icons.Check />
-                        </span>
-                      )}
+                      <h3 className="text-base font-bold text-white truncate">Relining Work</h3>
                     </div>
                     <button
                       onClick={addPipeLine}
@@ -440,13 +455,25 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-3">
-                    {[...pipeLines].reverse().map((line, index) => (
+                    {[...pipeLines].reverse().map((line, index) => {
+                      // Different colors for each line
+                      const lineColors = [
+                        'bg-cyan-500/20 border-cyan-500/40 text-cyan-400',
+                        'bg-blue-500/20 border-blue-500/40 text-blue-400',
+                        'bg-purple-500/20 border-purple-500/40 text-purple-400',
+                        'bg-pink-500/20 border-pink-500/40 text-pink-400',
+                        'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
+                        'bg-orange-500/20 border-orange-500/40 text-orange-400',
+                      ];
+                      const colorClass = lineColors[index % lineColors.length];
+                      
+                      return (
                       <div 
                         key={line.id} 
                         className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-xl animate-slideIn"
                       >
                         <div className="flex items-center justify-between mb-4 gap-2">
-                          <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-sm font-bold whitespace-nowrap">
+                          <span className={`px-3 py-1 border rounded-lg text-sm font-bold whitespace-nowrap ${colorClass}`}>
                             Line {pipeLines.length - index}
                           </span>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -501,20 +528,13 @@ export default function Home() {
 
                         {/* Meters Slider */}
                         <div className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="text-gray-300 font-semibold text-sm">Meters</label>
-                            <input
-                              type="number"
-                              value={line.meters}
-                              onChange={(e) => updatePipeLine(line.id, 'meters', Math.max(0, Math.min(50, Number(e.target.value))))}
-                              inputMode="decimal"
-                              className="w-20 bg-dark-lighter/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-base text-right font-bold focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:outline-none"
-                              min="0"
-                              max="50"
-                              step="0.5"
-                            />
-                          </div>
-                          <div className="relative">
+                          <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Meters</label>
+                          <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 mb-3">
+                            <div className="text-center mb-4">
+                              <span className="text-5xl font-bold text-primary">
+                                {line.meters}
+                              </span>
+                            </div>
                             <input
                               type="range"
                               min="0"
@@ -532,27 +552,29 @@ export default function Home() {
 
                         {/* Junctions Counter */}
                         <div className="mb-4">
-                          <label className="block text-gray-300 font-semibold mb-2 text-sm">Junctions</label>
-                          <div className="flex items-center gap-4">
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
-                              className="w-12 h-12 bg-dark-lighter/50 border border-gray-600/50 hover:border-primary/50 rounded-xl text-white font-bold text-xl transition-all hover:bg-primary/10 active:scale-90"
-                            >
-                              −
-                            </button>
-                            <div className="flex-1 text-center">
-                              <span className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-                                {line.junctions}
-                              </span>
+                          <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Junctions</label>
+                          <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4">
+                            <div className="flex items-center gap-4">
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
+                                className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
+                              >
+                                −
+                              </button>
+                              <div className="flex-1 text-center">
+                                <span className="text-5xl font-bold text-amber-400">
+                                  {line.junctions}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
+                                className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
+                              >
+                                +
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
-                              className="w-12 h-12 bg-dark-lighter/50 border border-gray-600/50 hover:border-primary/50 rounded-xl text-white font-bold text-xl transition-all hover:bg-primary/10 active:scale-90"
-                            >
-                              +
-                            </button>
                           </div>
                         </div>
 
@@ -598,7 +620,8 @@ export default function Home() {
                           )}
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               </div>
@@ -784,23 +807,23 @@ export default function Home() {
                 {/* Collapsed View */}
                 {summaryCollapsed ? (
                   <div className="space-y-3">
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-primary/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-300 font-semibold text-sm">Total</span>
-                        <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent leading-none">
-                          ${grandTotal.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
                     <button
                       onClick={() => setSummaryCollapsed(false)}
-                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                      className="w-full text-primary hover:text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 pb-2"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
                       Show full summary
                     </button>
+                    <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-4 border-2 border-emerald-500/40 mx-auto max-w-md">
+                      <div className="flex items-center justify-between">
+                        <span className="text-emerald-200 font-bold text-base">Total</span>
+                        <span className="text-4xl font-bold text-emerald-300 leading-none">
+                          ${grandTotal.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <>
