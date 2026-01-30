@@ -121,32 +121,28 @@ export default function Home() {
   const grandTotal = pipeWorkTotal + diggingTotal + materialsTotal;
 
   return (
-    <div className="min-h-screen bg-dark p-4 sm:p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-dark p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border-2 border-primary/30 bg-primary/5 mb-6">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border-2 border-primary/30 bg-primary/5 mb-4">
             <span className="text-primary text-lg">📋</span>
             <span className="text-primary font-semibold tracking-wide uppercase text-sm">
               Quote Builder
             </span>
           </div>
           
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
             Drainr Quote Tool
           </h1>
-          
-          <p className="text-gray-400 text-lg">
-            Automated quote generation from ServiceM8 to Qwilr
-          </p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-dark-card rounded-2xl border-2 border-gray-800 p-6 sm:p-8">
+        <div className="bg-dark-card rounded-2xl border-2 border-gray-800 p-4 sm:p-6">
           {/* Job Number Input */}
           {!jobData && (
-            <form onSubmit={handleFetchJob} className="mb-8">
-              <label className="block text-white font-semibold mb-4 text-lg">
+            <form onSubmit={handleFetchJob}>
+              <label className="block text-white font-semibold mb-3 text-lg">
                 ServiceM8 Job Number
               </label>
               
@@ -156,16 +152,16 @@ export default function Home() {
                   value={jobNumber}
                   onChange={(e) => setJobNumber(e.target.value)}
                   placeholder="Enter job number..."
-                  className="flex-1 bg-dark-lighter border-2 border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:outline-none transition-colors"
+                  className="flex-1 bg-dark-lighter border-2 border-gray-700 rounded-xl px-4 py-4 text-white text-lg placeholder-gray-500 focus:border-primary focus:outline-none transition-colors"
                   required
                 />
                 
                 <button
                   type="submit"
                   disabled={loading || !jobNumber}
-                  className="px-6 py-3 bg-primary hover:bg-primary-dark disabled:bg-gray-700 disabled:cursor-not-allowed text-dark font-semibold rounded-xl transition-colors duration-200"
+                  className="px-6 py-4 bg-primary hover:bg-primary-dark disabled:bg-gray-700 disabled:cursor-not-allowed text-dark font-bold rounded-xl transition-colors duration-200 text-lg"
                 >
-                  {loading ? 'Loading...' : 'Fetch Job'}
+                  {loading ? 'Loading...' : 'Fetch'}
                 </button>
               </div>
             </form>
@@ -173,285 +169,297 @@ export default function Home() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-900/20 border-2 border-red-500 rounded-xl">
+            <div className="mb-4 p-4 bg-red-900/20 border-2 border-red-500 rounded-xl">
               <p className="text-red-400">{error}</p>
             </div>
           )}
 
           {/* Job Data Display */}
           {jobData && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Job Summary */}
-              <div className="bg-dark-lighter rounded-xl p-4 border border-gray-700">
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 border-2 border-primary/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-400 text-sm">Job #{jobData.job.generated_job_id}</p>
-                    <p className="text-white font-semibold">{jobData.company.name}</p>
-                    <p className="text-gray-400 text-sm">{jobData.job.job_address}</p>
+                    <p className="text-primary text-sm font-semibold">Job #{jobData.job.generated_job_id}</p>
+                    <p className="text-white font-bold text-lg">{jobData.company.name}</p>
+                    <p className="text-gray-300 text-sm mt-1">{jobData.job.job_address}</p>
                   </div>
                   <button
                     onClick={() => setJobData(null)}
-                    className="text-gray-400 hover:text-white text-sm"
+                    className="text-primary hover:text-white text-sm font-semibold border border-primary/30 px-3 py-2 rounded-lg"
                   >
-                    Change Job
+                    Change
                   </button>
                 </div>
               </div>
 
-              <div className="border-t-2 border-gray-800 pt-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">Quote Details</h2>
+              <div className="border-t-2 border-gray-800 pt-6">
+                <h2 className="text-2xl font-bold text-primary mb-4">Quote Details</h2>
 
                 {/* Pipe Lines */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Pipe Work</h3>
+                    <h3 className="text-xl font-bold text-white">Pipe Work</h3>
                     <button
                       onClick={addPipeLine}
-                      className="px-4 py-2 bg-primary/20 hover:bg-primary/30 border border-primary rounded-lg text-primary font-semibold text-sm transition-colors"
+                      className="px-5 py-3 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-colors text-base"
                     >
                       + Add Line
                     </button>
                   </div>
 
-                      <div className="text-center py-8 bg-dark-lighter rounded-xl border border-gray-700">
-                      <p className="text-gray-400">No pipe lines added yet</p>
-                      <p className="text-gray-500 text-sm mt-1">Click &ldquo;Add Line&rdquo; to start</p>
+                  {pipeLines.length === 0 ? (
+                    <div className="text-center py-12 bg-dark-lighter rounded-xl border-2 border-dashed border-gray-700">
+                      <p className="text-gray-400 text-lg">No pipe lines added yet</p>
+                      <p className="text-gray-500 text-sm mt-2">Tap &ldquo;Add Line&rdquo; to start</p>
                     </div>
-
-                  <div className="space-y-4">
-                    {pipeLines.map((line, index) => (
-                      <div key={line.id} className="bg-dark-lighter rounded-xl p-4 border border-gray-700">
-                        <div className="flex items-start justify-between mb-4">
-                          <span className="text-primary font-semibold">Line {index + 1}</span>
-                          <button
-                            onClick={() => removePipeLine(line.id)}
-                            className="text-red-400 hover:text-red-300 text-sm"
-                          >
-                            Remove
-                          </button>
-                        </div>
-
-                        {/* Pipe Size */}
-                        <div className="mb-4">
-                          <label className="block text-gray-400 text-sm mb-2">Pipe Size</label>
-                          <div className="grid grid-cols-2 gap-3">
+                  ) : (
+                    <div className="space-y-4">
+                      {pipeLines.map((line, index) => (
+                        <div key={line.id} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-5 border border-gray-700">
+                          <div className="flex items-start justify-between mb-4">
+                            <span className="text-primary font-bold text-lg">Line {index + 1}</span>
                             <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'size', '100mm')}
-                              className={`py-3 rounded-xl font-semibold transition-all ${
-                                line.size === '100mm'
-                                  ? 'bg-primary text-dark border-2 border-primary'
-                                  : 'bg-dark border-2 border-gray-700 text-gray-400 hover:border-primary/50'
-                              }`}
+                              onClick={() => removePipeLine(line.id)}
+                              className="text-red-400 hover:text-red-300 font-semibold px-3 py-1 border border-red-400/30 rounded-lg"
                             >
-                              <div>100mm</div>
-                              <div className="text-xs opacity-70">Standard</div>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'size', '150mm')}
-                              className={`py-3 rounded-xl font-semibold transition-all ${
-                                line.size === '150mm'
-                                  ? 'bg-primary text-dark border-2 border-primary'
-                                  : 'bg-dark border-2 border-gray-700 text-gray-400 hover:border-primary/50'
-                              }`}
-                            >
-                              <div>150mm</div>
-                              <div className="text-xs opacity-70">Multi-dwelling</div>
+                              Remove
                             </button>
                           </div>
-                        </div>
 
-                        {/* Meters Slider */}
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="text-gray-400 text-sm">Meters</label>
+                          {/* Pipe Size */}
+                          <div className="mb-5">
+                            <label className="block text-gray-300 font-semibold mb-3 text-base">Pipe Size</label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'size', '100mm')}
+                                className={`py-4 rounded-xl font-bold transition-all text-base ${
+                                  line.size === '100mm'
+                                    ? 'bg-primary text-dark border-2 border-primary shadow-lg shadow-primary/20'
+                                    : 'bg-dark border-2 border-gray-600 text-gray-300 hover:border-primary/50'
+                                }`}
+                              >
+                                <div>100mm</div>
+                                <div className="text-xs font-normal opacity-80 mt-1">Standard</div>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'size', '150mm')}
+                                className={`py-4 rounded-xl font-bold transition-all text-base ${
+                                  line.size === '150mm'
+                                    ? 'bg-primary text-dark border-2 border-primary shadow-lg shadow-primary/20'
+                                    : 'bg-dark border-2 border-gray-600 text-gray-300 hover:border-primary/50'
+                                }`}
+                              >
+                                <div>150mm</div>
+                                <div className="text-xs font-normal opacity-80 mt-1">Multi-dwelling</div>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Meters Slider */}
+                          <div className="mb-5">
+                            <div className="flex items-center justify-between mb-3">
+                              <label className="text-gray-300 font-semibold text-base">Meters</label>
+                              <input
+                                type="number"
+                                value={line.meters}
+                                onChange={(e) => updatePipeLine(line.id, 'meters', Math.max(0, Math.min(50, Number(e.target.value))))}
+                                className="w-24 bg-dark border-2 border-gray-600 rounded-lg px-3 py-2 text-white text-lg text-right font-bold"
+                                min="0"
+                                max="50"
+                              />
+                            </div>
                             <input
-                              type="number"
-                              value={line.meters}
-                              onChange={(e) => updatePipeLine(line.id, 'meters', Math.max(0, Math.min(50, Number(e.target.value))))}
-                              className="w-20 bg-dark border border-gray-700 rounded-lg px-3 py-1 text-white text-right"
+                              type="range"
                               min="0"
                               max="50"
+                              step="0.5"
+                              value={line.meters}
+                              onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
+                              className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                              style={{
+                                background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, #374151 ${(line.meters / 50) * 100}%, #374151 100%)`
+                              }}
                             />
                           </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="50"
-                            step="0.5"
-                            value={line.meters}
-                            onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
-                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                          />
-                        </div>
 
-                        {/* Junctions Counter */}
-                        <div className="mb-4">
-                          <label className="block text-gray-400 text-sm mb-2">Junctions</label>
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
-                              className="w-10 h-10 bg-dark border-2 border-gray-700 hover:border-primary rounded-lg text-white font-bold"
-                            >
-                              -
-                            </button>
-                            <div className="flex-1 text-center">
-                              <span className="text-2xl font-bold text-white">{line.junctions}</span>
+                          {/* Junctions Counter */}
+                          <div className="mb-5">
+                            <label className="block text-gray-300 font-semibold mb-3 text-base">Junctions</label>
+                            <div className="flex items-center gap-4">
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
+                                className="w-14 h-14 bg-dark border-2 border-gray-600 hover:border-primary rounded-xl text-white font-bold text-2xl"
+                              >
+                                -
+                              </button>
+                              <div className="flex-1 text-center">
+                                <span className="text-4xl font-bold text-primary">{line.junctions}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
+                                className="w-14 h-14 bg-dark border-2 border-gray-600 hover:border-primary rounded-xl text-white font-bold text-2xl"
+                              >
+                                +
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
-                              className="w-10 h-10 bg-dark border-2 border-gray-700 hover:border-primary rounded-lg text-white font-bold"
-                            >
-                              +
-                            </button>
                           </div>
-                        </div>
 
-                        {/* Line Total */}
-                        <div className="pt-3 border-t border-gray-700">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400 text-sm">Line Total</span>
-                            <span className="text-primary font-bold text-lg">
-                              ${calculateLineTotal(line).toLocaleString()}
-                            </span>
+                          {/* Line Total */}
+                          <div className="pt-4 border-t-2 border-gray-700">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-400 font-semibold">Line Total</span>
+                              <span className="text-primary font-bold text-2xl">
+                                ${calculateLineTotal(line).toLocaleString()}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Digging Section */}
                 <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Digging Required?</h3>
-                    <button
-                      onClick={() => setDiggingEnabled(!diggingEnabled)}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                        diggingEnabled
-                          ? 'bg-primary text-dark'
-                          : 'bg-dark-lighter border border-gray-700 text-gray-400'
-                      }`}
-                    >
-                      {diggingEnabled ? 'Yes' : 'No'}
-                    </button>
-                  </div>
+                  <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-xl p-5 border-2 border-orange-500/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-white">Digging Required?</h3>
+                      <button
+                        onClick={() => setDiggingEnabled(!diggingEnabled)}
+                        className={`px-6 py-3 rounded-xl font-bold transition-all text-base ${
+                          diggingEnabled
+                            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                            : 'bg-dark-lighter border-2 border-gray-600 text-gray-400'
+                        }`}
+                      >
+                        {diggingEnabled ? 'Yes' : 'No'}
+                      </button>
+                    </div>
 
-                  {diggingEnabled && (
-                    <div className="bg-dark-lighter rounded-xl p-4 border border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-gray-400 text-sm">Hours</label>
+                    {diggingEnabled && (
+                      <div className="mt-4 space-y-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-gray-300 font-semibold text-base">Hours</label>
+                          <input
+                            type="number"
+                            value={diggingHours}
+                            onChange={(e) => setDiggingHours(Math.max(0, Number(e.target.value)))}
+                            className="w-24 bg-dark border-2 border-orange-500/30 rounded-lg px-3 py-2 text-white text-lg text-right font-bold"
+                            min="0"
+                            step="0.5"
+                          />
+                        </div>
                         <input
-                          type="number"
-                          value={diggingHours}
-                          onChange={(e) => setDiggingHours(Math.max(0, Number(e.target.value)))}
-                          className="w-20 bg-dark border border-gray-700 rounded-lg px-3 py-1 text-white text-right"
+                          type="range"
                           min="0"
+                          max="8"
                           step="0.5"
+                          value={diggingHours}
+                          onChange={(e) => setDiggingHours(Number(e.target.value))}
+                          className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                          style={{
+                            background: `linear-gradient(to right, #f97316 0%, #f97316 ${(diggingHours / 8) * 100}%, #374151 ${(diggingHours / 8) * 100}%, #374151 100%)`
+                          }}
                         />
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="8"
-                        step="0.5"
-                        value={diggingHours}
-                        onChange={(e) => setDiggingHours(Number(e.target.value))}
-                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                      />
-                      <div className="mt-3 pt-3 border-t border-gray-700">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-400 text-sm">{diggingHours}h × $180/hr</span>
-                          <span className="text-primary font-bold">${diggingTotal.toLocaleString()}</span>
+                        <div className="pt-4 border-t-2 border-orange-500/30">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-300 font-semibold">{diggingHours}h × $180/hr</span>
+                            <span className="text-orange-400 font-bold text-2xl">${diggingTotal.toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Extra Materials Section */}
                 <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Extra Materials?</h3>
-                    <button
-                      onClick={() => setMaterialsEnabled(!materialsEnabled)}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                        materialsEnabled
-                          ? 'bg-primary text-dark'
-                          : 'bg-dark-lighter border border-gray-700 text-gray-400'
-                      }`}
-                    >
-                      {materialsEnabled ? 'Yes' : 'No'}
-                    </button>
-                  </div>
+                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl p-5 border-2 border-purple-500/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-white">Extra Materials?</h3>
+                      <button
+                        onClick={() => setMaterialsEnabled(!materialsEnabled)}
+                        className={`px-6 py-3 rounded-xl font-bold transition-all text-base ${
+                          materialsEnabled
+                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                            : 'bg-dark-lighter border-2 border-gray-600 text-gray-400'
+                        }`}
+                      >
+                        {materialsEnabled ? 'Yes' : 'No'}
+                      </button>
+                    </div>
 
-                  {materialsEnabled && (
-                    <div className="bg-dark-lighter rounded-xl p-4 border border-gray-700 space-y-3">
-                      <div>
-                        <label className="block text-gray-400 text-sm mb-2">Amount</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white">$</span>
-                          <input
-                            type="number"
-                            value={extraMaterials}
-                            onChange={(e) => setExtraMaterials(Math.max(0, Number(e.target.value)))}
-                            className="w-full bg-dark border border-gray-700 rounded-lg pl-8 pr-3 py-2 text-white"
-                            min="0"
-                            step="10"
+                    {materialsEnabled && (
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <label className="block text-gray-300 font-semibold mb-2 text-base">Amount</label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-xl font-bold">$</span>
+                            <input
+                              type="number"
+                              value={extraMaterials}
+                              onChange={(e) => setExtraMaterials(Math.max(0, Number(e.target.value)))}
+                              className="w-full bg-dark border-2 border-purple-500/30 rounded-lg pl-10 pr-4 py-3 text-white text-xl font-bold"
+                              min="0"
+                              step="10"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-gray-300 font-semibold mb-2 text-base">Note (optional)</label>
+                          <textarea
+                            value={materialsNote}
+                            onChange={(e) => setMaterialsNote(e.target.value)}
+                            placeholder="What materials are needed?"
+                            className="w-full bg-dark border-2 border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-gray-500 resize-none text-base"
+                            rows={3}
                           />
                         </div>
                       </div>
-                      <div>
-                        <label className="block text-gray-400 text-sm mb-2">Note (optional)</label>
-                        <textarea
-                          value={materialsNote}
-                          onChange={(e) => setMaterialsNote(e.target.value)}
-                          placeholder="What materials are needed?"
-                          className="w-full bg-dark border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 resize-none"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Quote Summary */}
                 {pipeLines.length > 0 && (
-                  <div className="bg-primary/10 border-2 border-primary rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-primary mb-4">Quote Summary</h3>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-gray-300">
-                        <span>Pipe Work ({pipeLines.length} line{pipeLines.length !== 1 ? 's' : ''})</span>
-                        <span>${pipeWorkTotal.toLocaleString()}</span>
+                  <div className="bg-gradient-to-br from-primary/20 to-primary/10 border-3 border-primary rounded-2xl p-6 shadow-xl shadow-primary/10">
+                    <h3 className="text-2xl font-bold text-white mb-5">Quote Summary</h3>
+                    <div className="space-y-3 mb-5">
+                      <div className="flex justify-between text-gray-200 text-lg">
+                        <span className="font-semibold">Pipe Work ({pipeLines.length} line{pipeLines.length !== 1 ? 's' : ''})</span>
+                        <span className="font-bold">${pipeWorkTotal.toLocaleString()}</span>
                       </div>
                       {diggingEnabled && diggingHours > 0 && (
-                        <div className="flex justify-between text-gray-300">
-                          <span>Digging ({diggingHours}h)</span>
-                          <span>${diggingTotal.toLocaleString()}</span>
+                        <div className="flex justify-between text-orange-300 text-lg">
+                          <span className="font-semibold">Digging ({diggingHours}h)</span>
+                          <span className="font-bold">${diggingTotal.toLocaleString()}</span>
                         </div>
                       )}
                       {materialsEnabled && extraMaterials > 0 && (
-                        <div className="flex justify-between text-gray-300">
-                          <span>Extra Materials</span>
-                          <span>${materialsTotal.toLocaleString()}</span>
+                        <div className="flex justify-between text-purple-300 text-lg">
+                          <span className="font-semibold">Extra Materials</span>
+                          <span className="font-bold">${materialsTotal.toLocaleString()}</span>
                         </div>
                       )}
                     </div>
-                    <div className="pt-4 border-t-2 border-primary/30">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white font-bold text-lg">TOTAL</span>
-                        <span className="text-primary font-bold text-3xl">${grandTotal.toLocaleString()}</span>
+                    <div className="pt-5 border-t-2 border-primary/40">
+                      <div className="flex justify-between items-center mb-6">
+                        <span className="text-white font-bold text-2xl">TOTAL</span>
+                        <span className="text-primary font-bold text-4xl">${grandTotal.toLocaleString()}</span>
                       </div>
+                      <button
+                        className="w-full py-5 bg-primary hover:bg-primary-dark text-dark font-bold text-xl rounded-xl transition-colors shadow-lg shadow-primary/30"
+                        onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
+                      >
+                        Generate Quote
+                      </button>
                     </div>
-                    <button
-                      className="w-full mt-6 py-4 bg-primary hover:bg-primary-dark text-dark font-bold text-lg rounded-xl transition-colors"
-                      onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
-                    >
-                      Generate Quote
-                    </button>
                   </div>
                 )}
               </div>
