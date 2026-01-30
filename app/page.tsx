@@ -417,7 +417,7 @@ export default function Home() {
 
               {/* Pipe Lines */}
               <div>
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg">
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20 shadow-lg">
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-primary/20 rounded-xl">
@@ -605,7 +605,7 @@ export default function Home() {
 
               {/* Digging Section */}
               <div>
-                <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl p-5 border border-orange-500/20 shadow-lg">
+                <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl p-4 border border-orange-500/20 shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-orange-500/20 rounded-xl">
@@ -673,7 +673,7 @@ export default function Home() {
               {extraItems.length === 0 ? (
                 <button
                   onClick={addExtraItem}
-                  className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-5 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all active:scale-95"
+                  className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-4 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all active:scale-95"
                 >
                   <div className="flex items-center justify-center gap-3">
                     <div className="p-2 bg-purple-500/20 rounded-xl">
@@ -686,7 +686,7 @@ export default function Home() {
                 </button>
               ) : (
                 <div>
-                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl p-5 border border-purple-500/20 shadow-lg">
+                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl p-4 border border-purple-500/20 shadow-lg">
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-purple-500/20 rounded-xl">
@@ -769,25 +769,25 @@ export default function Home() {
         
         {/* Spacer for sticky footer - ensures content isn't hidden */}
         {jobData && pipeLines.length > 0 && (
-          <div className="h-[400px]" />
+          <div className="h-[280px]" />
         )}
       </div>
 
       {/* Sticky Summary Footer */}
       {jobData && pipeLines.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent pt-4 pb-safe z-50 animate-slideUp">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-primary/20 backdrop-blur-xl">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent pt-2 pb-safe z-50 animate-slideUp">
+          <div className="max-w-4xl mx-auto px-3">
+            <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-4 shadow-2xl shadow-primary/20 backdrop-blur-xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
               
               <div className="relative">
                 {/* Collapsed View */}
                 {summaryCollapsed ? (
                   <button
                     onClick={() => setSummaryCollapsed(false)}
-                    className="w-full flex items-center justify-between"
+                    className="w-full flex items-center justify-between mb-3"
                   >
-                    <span className="text-white font-bold text-lg">Quote Total</span>
+                    <span className="text-white font-bold text-base">Total</span>
                     <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
                       ${grandTotal.toLocaleString()}
                     </span>
@@ -795,41 +795,41 @@ export default function Home() {
                 ) : (
                   <>
                     {/* Expanded View */}
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        Quote Summary
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-white">
+                        Summary
                       </h3>
                       <button
                         onClick={() => setSummaryCollapsed(true)}
-                        className="text-gray-400 hover:text-white text-sm"
+                        className="text-gray-400 hover:text-white text-xs"
                       >
                         Collapse
                       </button>
                     </div>
                     
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-1.5 mb-3">
                       <div className="flex justify-between text-gray-200 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
-                        <span className="font-semibold">Pipe Work ({pipeLines.length})</span>
+                        <span className="font-medium">Pipe Work ({pipeLines.length})</span>
                         <span className="font-bold">${pipeWorkTotal.toLocaleString()}</span>
                       </div>
                       {diggingEnabled && diggingHours > 0 && (
                         <div className="flex justify-between text-orange-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
-                          <span className="font-semibold">Digging ({diggingHours}h)</span>
+                          <span className="font-medium">Digging ({diggingHours}h)</span>
                           <span className="font-bold">${diggingTotal.toLocaleString()}</span>
                         </div>
                       )}
                       {extraItems.length > 0 && (
                         <div className="flex justify-between text-purple-300 text-sm bg-white/5 backdrop-blur-sm rounded-lg p-2">
-                          <span className="font-semibold">Extras ({extraItems.length})</span>
+                          <span className="font-medium">Extras ({extraItems.length})</span>
                           <span className="font-bold">${extrasTotal.toLocaleString()}</span>
                         </div>
                       )}
                     </div>
                     
-                    <div className="pt-4 border-t-2 border-primary/30 mb-4">
+                    <div className="pt-3 border-t-2 border-primary/30 mb-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-white font-bold text-xl">TOTAL</span>
-                        <span className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent animate-pulse-slow">
+                        <span className="text-white font-bold text-lg">TOTAL</span>
+                        <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent animate-pulse-slow">
                           ${grandTotal.toLocaleString()}
                         </span>
                       </div>
@@ -839,7 +839,7 @@ export default function Home() {
                 
                 <button
                   disabled={!isValid}
-                  className="w-full py-4 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-lg rounded-2xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none"
+                  className="w-full py-3.5 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-base rounded-xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none"
                   onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
                 >
                   Generate Quote
