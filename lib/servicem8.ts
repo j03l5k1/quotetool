@@ -16,9 +16,19 @@ export interface ServiceM8Company {
   address: string;
 }
 
+export interface ServiceM8JobContact {
+  uuid: string;
+  first: string;
+  last: string;
+  email: string;
+  mobile: string;
+  phone: string;
+}
+
 export interface JobData {
   job: ServiceM8Job;
   company: ServiceM8Company;
+  contact: ServiceM8JobContact | null;
 }
 
 export class ServiceM8Client {
@@ -60,13 +70,32 @@ export class ServiceM8Client {
     return company;
   }
 
+  async getJobContact(jobUuid: string): Promise<ServiceM8JobContact | null> {
+    try {
+      // Get job contacts for this job
+      const contacts = await this.request<ServiceM8JobContact[]>(`/jobcontact.json?%24filter=job_uuid%20eq%20'${jobUuid}'`);
+      
+      if (!contacts || contacts.length === 0) {
+        return null;
+      }
+
+      // Return the first contact (usually the main contact)
+      return contacts[0];
+    } catch (error) {
+      console.error('Error fetching job contact:', error);
+      return null;
+    }
+  }
+
   async getJobData(jobNumber: string): Promise<JobData> {
     const job = await this.getJob(jobNumber);
     const company = await this.getCompany(job.company_uuid);
+    const contact = await this.getJobContact(job.uuid);
 
     return {
       job,
       company,
+      contact,
     };
   }
 }
