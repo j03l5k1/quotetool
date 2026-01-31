@@ -386,19 +386,17 @@ export default function Home() {
                       </div>
                       <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
                       
-                      {/* Address on left (formatted), Email/Phone on right */}
-                      <div className="flex gap-4">
-                        {/* Left side - Address */}
-                        <div className="flex items-start gap-2 text-gray-300 flex-1">
+                      {/* Address, Email, Phone - stacked with separators */}
+                      <div className="space-y-2.5">
+                        {/* Address */}
+                        <div className="flex items-start gap-2 text-gray-300">
                           <Icons.MapPin />
-                          <p className="text-sm leading-relaxed">
+                          <p className="text-sm leading-snug">
                             {(() => {
                               const address = jobData.job.job_address;
-                              // Split by comma and clean up
                               const parts = address.split(',').map(p => p.trim());
                               
                               if (parts.length >= 3) {
-                                // Format: street, suburb state, postcode
                                 return (
                                   <>
                                     {parts[0]},
@@ -409,7 +407,6 @@ export default function Home() {
                                   </>
                                 );
                               } else if (parts.length === 2) {
-                                // Format: street, rest
                                 return (
                                   <>
                                     {parts[0]},
@@ -423,25 +420,28 @@ export default function Home() {
                           </p>
                         </div>
                         
-                        {/* Right side - Email and Phone stacked */}
+                        {/* Separator */}
                         {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
-                          <div className="flex flex-col gap-1.5 items-end">
-                            {jobData.contact.email && (
-                              <div className="flex items-center gap-2 text-gray-300">
-                                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <p className="text-xs truncate max-w-[140px]">{jobData.contact.email}</p>
-                              </div>
-                            )}
-                            {(jobData.contact.mobile || jobData.contact.phone) && (
-                              <div className="flex items-center gap-2 text-gray-300">
-                                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                <p className="text-xs whitespace-nowrap">{jobData.contact.mobile || jobData.contact.phone}</p>
-                              </div>
-                            )}
+                          <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
+                        )}
+                        
+                        {/* Email */}
+                        {jobData.contact?.email && (
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <p className="text-sm truncate">{jobData.contact.email}</p>
+                          </div>
+                        )}
+                        
+                        {/* Phone */}
+                        {(jobData.contact?.mobile || jobData.contact?.phone) && (
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <p className="text-sm">{jobData.contact.mobile || jobData.contact.phone}</p>
                           </div>
                         )}
                       </div>
