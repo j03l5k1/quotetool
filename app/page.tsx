@@ -394,23 +394,23 @@ export default function Home() {
                           <p className="text-sm leading-relaxed">{jobData.job.job_address}</p>
                         </div>
                         
-                        {/* Contact info grid */}
+                        {/* Contact info - wraps on mobile */}
                         {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
-                          <div className="flex gap-4 pl-6">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1.5 pl-6">
                             {jobData.contact.email && (
-                              <div className="flex items-center gap-2 text-gray-300">
+                              <div className="flex items-center gap-2 text-gray-300 min-w-0">
                                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
-                                <p className="text-xs truncate max-w-[150px]">{jobData.contact.email}</p>
+                                <p className="text-xs truncate max-w-[180px]">{jobData.contact.email}</p>
                               </div>
                             )}
                             {(jobData.contact.mobile || jobData.contact.phone) && (
-                              <div className="flex items-center gap-2 text-gray-300">
+                              <div className="flex items-center gap-2 text-gray-300 flex-shrink-0">
                                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
-                                <p className="text-xs">{jobData.contact.mobile || jobData.contact.phone}</p>
+                                <p className="text-xs whitespace-nowrap">{jobData.contact.mobile || jobData.contact.phone}</p>
                               </div>
                             )}
                           </div>
