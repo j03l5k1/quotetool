@@ -386,25 +386,39 @@ export default function Home() {
                       </div>
                       <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
                       
-                      {/* Address on left (wraps), Email/Phone on right */}
+                      {/* Address on left (formatted), Email/Phone on right */}
                       <div className="flex gap-4">
                         {/* Left side - Address */}
                         <div className="flex items-start gap-2 text-gray-300 flex-1">
                           <Icons.MapPin />
                           <p className="text-sm leading-relaxed">
                             {(() => {
-                              const parts = jobData.job.job_address.split(',');
-                              if (parts.length >= 2) {
-                                // Show street on first line, rest on second line
+                              const address = jobData.job.job_address;
+                              // Split by comma and clean up
+                              const parts = address.split(',').map(p => p.trim());
+                              
+                              if (parts.length >= 3) {
+                                // Format: street, suburb state, postcode
                                 return (
                                   <>
-                                    {parts[0].trim()}
+                                    {parts[0]},
                                     <br />
-                                    {parts.slice(1).join(',').trim()}
+                                    {parts[1]}
+                                    <br />
+                                    {parts[2]}
+                                  </>
+                                );
+                              } else if (parts.length === 2) {
+                                // Format: street, rest
+                                return (
+                                  <>
+                                    {parts[0]},
+                                    <br />
+                                    {parts[1]}
                                   </>
                                 );
                               }
-                              return jobData.job.job_address;
+                              return address;
                             })()}
                           </p>
                         </div>
