@@ -373,84 +373,82 @@ export default function Home() {
             </>
           ) : (
             <div className="space-y-6 animate-fadeIn">
+              {/* Action Buttons - above card */}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    if (confirm('Start a new quote? This will clear all current data.')) {
+                      setJobData(null);
+                      setPipeLines([{
+                        id: Date.now().toString(),
+                        size: '100mm',
+                        meters: 10,
+                        junctions: 0,
+                      }]);
+                      setDiggingHours(0);
+                      setDiggingEnabled(false);
+                      setExtraItems([]);
+                      localStorage.removeItem('quoteDraft');
+                    }
+                  }}
+                  className="text-orange-400 hover:text-orange-300 text-sm font-bold border border-orange-400/30 hover:border-orange-400/50 px-4 py-2 rounded-xl transition-all hover:bg-orange-400/10 active:scale-95"
+                >
+                  New Quote
+                </button>
+                <button
+                  onClick={() => {
+                    setJobData(null);
+                    localStorage.removeItem('quoteDraft');
+                  }}
+                  className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95"
+                >
+                  Change Job
+                </button>
+              </div>
+
               {/* Job Summary */}
               <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg shadow-primary/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
                 <div className="relative">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-bold">
-                          #{jobData.job.generated_job_id}
-                        </span>
-                      </div>
-                      <p className="text-white font-bold text-lg mb-3 break-words">{jobData.company.name}</p>
-                      
-                      {/* Address, Email, Phone - stacked with separators */}
-                      <div className="space-y-2.5">
-                        {/* Address - compact single line if possible */}
-                        <div className="flex items-start gap-2 text-gray-300">
-                          <Icons.MapPin />
-                          <p className="text-sm leading-snug flex-1">{jobData.job.job_address}</p>
-                        </div>
-                        
-                        {/* Separator */}
-                        {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
-                          <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
-                        )}
-                        
-                        {/* Email - show full text */}
-                        {jobData.contact?.email && (
-                          <div className="flex items-start gap-2 text-gray-300">
-                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            <p className="text-sm break-all leading-snug flex-1">{jobData.contact.email}</p>
-                          </div>
-                        )}
-                        
-                        {/* Phone */}
-                        {(jobData.contact?.mobile || jobData.contact?.phone) && (
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5" />
-                            </svg>
-                            <p className="text-sm">{jobData.contact.mobile || jobData.contact.phone}</p>
-                          </div>
-                        )}
-                      </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-bold">
+                      #{jobData.job.generated_job_id}
+                    </span>
+                  </div>
+                  <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
+                  
+                  {/* Address, Email, Phone - stacked with separators */}
+                  <div className="space-y-2.5">
+                    {/* Address */}
+                    <div className="flex items-start gap-2 text-gray-300">
+                      <Icons.MapPin />
+                      <p className="text-sm leading-snug">{jobData.job.job_address}</p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => {
-                          if (confirm('Start a new quote? This will clear all current data.')) {
-                            setJobData(null);
-                            setPipeLines([{
-                              id: Date.now().toString(),
-                              size: '100mm',
-                              meters: 10,
-                              junctions: 0,
-                            }]);
-                            setDiggingHours(0);
-                            setDiggingEnabled(false);
-                            setExtraItems([]);
-                            localStorage.removeItem('quoteDraft');
-                          }
-                        }}
-                        className="text-orange-400 hover:text-orange-300 text-sm font-bold border border-orange-400/30 hover:border-orange-400/50 px-3 py-2 rounded-xl transition-all hover:bg-orange-400/10 active:scale-95"
-                      >
-                        New
-                      </button>
-                      <button
-                        onClick={() => {
-                          setJobData(null);
-                          localStorage.removeItem('quoteDraft');
-                        }}
-                        className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-3 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95"
-                      >
-                        Change
-                      </button>
-                    </div>
+                    
+                    {/* Separator */}
+                    {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
+                      <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
+                    )}
+                    
+                    {/* Email */}
+                    {jobData.contact?.email && (
+                      <div className="flex items-start gap-2 text-gray-300">
+                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm break-all leading-snug">{jobData.contact.email}</p>
+                      </div>
+                    )}
+                    
+                    {/* Phone */}
+                    {(jobData.contact?.mobile || jobData.contact?.phone) && (
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5" />
+                        </svg>
+                        <p className="text-sm">{jobData.contact.mobile || jobData.contact.phone}</p>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Job Notes */}
