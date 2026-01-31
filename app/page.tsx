@@ -384,14 +384,14 @@ export default function Home() {
                           #{jobData.job.generated_job_id}
                         </span>
                       </div>
-                      <p className="text-white font-bold text-lg mb-3 whitespace-nowrap overflow-hidden text-ellipsis">{jobData.company.name}</p>
+                      <p className="text-white font-bold text-lg mb-3 break-words">{jobData.company.name}</p>
                       
                       {/* Address, Email, Phone - stacked with separators */}
                       <div className="space-y-2.5">
                         {/* Address - compact single line if possible */}
                         <div className="flex items-start gap-2 text-gray-300">
                           <Icons.MapPin />
-                          <p className="text-sm leading-snug">{jobData.job.job_address}</p>
+                          <p className="text-sm leading-snug flex-1">{jobData.job.job_address}</p>
                         </div>
                         
                         {/* Separator */}
@@ -405,7 +405,7 @@ export default function Home() {
                             <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            <p className="text-sm break-all leading-snug">{jobData.contact.email}</p>
+                            <p className="text-sm break-all leading-snug flex-1">{jobData.contact.email}</p>
                           </div>
                         )}
                         
