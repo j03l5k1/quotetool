@@ -155,6 +155,12 @@ export default function Home() {
   const [showUndo, setShowUndo] = useState(false);
   const [summaryCollapsed, setSummaryCollapsed] = useState(true); // Default to collapsed
 
+  // Quote generation state
+  const [generatingQuote, setGeneratingQuote] = useState(false);
+  const [quoteGenerated, setQuoteGenerated] = useState(false);
+  const [qwilrLink, setQwilrLink] = useState<string | null>(null);
+  const [quoteError, setQuoteError] = useState('');
+
   // Auto-save draft to localStorage
   useEffect(() => {
     if (jobData) {
@@ -209,6 +215,57 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateQuote = async () => {
+    setGeneratingQuote(true);
+    setQuoteError('');
+    
+    try {
+      const quotePayload = {
+        jobNumber,
+        jobData,
+        pipeLines: pipeLines.map(line => ({
+          ...line,
+          total: calculateLineTotal(line)
+        })),
+        digging: {
+          enabled: diggingEnabled,
+          hours: diggingHours,
+          total: diggingTotal
+        },
+        extras: extraItems,
+        totals: {
+          pipeWork: pipeWorkTotal,
+          digging: diggingTotal,
+          extras: extrasTotal,
+          grandTotal: grandTotal
+        }
+      };
+
+      const response = await fetch('/api/generate-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quotePayload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate quote');
+      }
+
+      // Show success modal with Qwilr link
+      setQwilrLink(result.qwilrLink);
+      setQuoteGenerated(true);
+      
+    } catch (err) {
+      setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
+    } finally {
+      setGeneratingQuote(false);
     }
   };
 
@@ -917,11 +974,18 @@ export default function Home() {
                 )}
                 
                 <button
-                  disabled={!isValid}
+                  disabled={!isValid || generatingQuote}
                   className="w-full py-3 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-base rounded-xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none mt-2"
-                  onClick={() => alert('Phase 3: Generate Qwilr quote - coming next!')}
+                  onClick={handleGenerateQuote}
                 >
-                  Generate Quote
+                  {generatingQuote ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-dark border-t-transparent rounded-full animate-spin" />
+                      <span>Generating...</span>
+                    </div>
+                  ) : (
+                    'Generate Quote'
+                  )}
                 </button>
               </div>
             </div>
@@ -940,6 +1004,99 @@ export default function Home() {
             >
               <Icons.Undo />
               Undo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Quote Generated Success Modal */}
+      {quoteGenerated && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-gradient-to-br from-dark-card to-dark-lighter border-2 border-primary/30 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-primary/20 animate-slideUp">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center mb-4">
+                <Icons.Check />
+              </div>
+              
+              <h3 className="text-2xl font-bold text-white mb-2">Quote Generated!</h3>
+              <p className="text-gray-400 mb-6">Your quote has been sent to Zapier and Qwilr</p>
+              
+              {qwilrLink ? (
+                <>
+                  <div className="bg-dark-lighter/50 border border-primary/30 rounded-xl p-4 mb-6">
+                    <p className="text-xs text-gray-400 mb-2">Qwilr Link:</p>
+                    <a 
+                      href={qwilrLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-white text-sm font-mono break-all underline"
+                    >
+                      {qwilrLink}
+                    </a>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(qwilrLink);
+                        alert('Link copied to clipboard!');
+                      }}
+                      className="flex-1 px-4 py-3 bg-primary/20 border border-primary/30 hover:bg-primary/30 text-primary font-bold rounded-xl transition-all text-sm active:scale-95"
+                    >
+                      Copy Link
+                    </button>
+                    <button
+                      onClick={() => window.open(qwilrLink, '_blank')}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30 active:scale-95"
+                    >
+                      Open Quote
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-6">
+                  <p className="text-orange-400 text-sm">
+                    Quote sent to Zapier successfully!<br/>
+                    <span className="text-xs text-orange-300 mt-1 block">
+                      The Qwilr link will be available once Zapier processes the quote.
+                    </span>
+                  </p>
+                </div>
+              )}
+              
+              <button
+                onClick={() => {
+                  setQuoteGenerated(false);
+                  setQwilrLink(null);
+                }}
+                className="mt-4 w-full px-4 py-3 bg-dark-lighter/50 hover:bg-dark-lighter border border-gray-700/50 hover:border-gray-600 text-gray-300 hover:text-white font-semibold rounded-xl transition-all text-sm active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quote Error Toast */}
+      {quoteError && (
+        <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-red-500/20 border-2 border-red-500/50 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp max-w-md">
+          <div className="flex items-start gap-3">
+            <div className="p-1 bg-red-500/20 rounded-lg flex-shrink-0">
+              <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-red-400 font-semibold text-sm">Failed to generate quote</p>
+              <p className="text-red-300 text-xs mt-1">{quoteError}</p>
+            </div>
+            <button
+              onClick={() => setQuoteError('')}
+              className="text-red-400 hover:text-red-300 transition-colors"
+            >
+              <Icons.X />
             </button>
           </div>
         </div>
