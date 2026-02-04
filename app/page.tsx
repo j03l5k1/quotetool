@@ -26,6 +26,12 @@ interface JobData {
     address: string;
   };
   contact: JobContact | null;
+  staff?: {
+    first: string;
+    last: string;
+    email?: string;
+    mobile?: string;
+  } | null;
 }
 
 interface PipeLine {
@@ -146,6 +152,8 @@ export default function Home() {
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
+  const [technicianName, setTechnicianName] = useState('');
+  const [scopeOfWorks, setScopeOfWorks] = useState('');
 
   // UI state
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -209,6 +217,19 @@ export default function Home() {
       }
 
       setJobData(data);
+      
+      // Auto-populate technician name from ServiceM8 staff data
+      if (data.staff) {
+        const staffName = `${data.staff.first} ${data.staff.last}`.trim();
+        if (staffName) {
+          setTechnicianName(staffName);
+        }
+      }
+      
+      // Auto-populate scope of works from job description
+      if (data.job?.job_description) {
+        setScopeOfWorks(data.job.job_description);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -224,6 +245,8 @@ export default function Home() {
       const quotePayload = {
         jobNumber,
         jobData,
+        technicianName,
+        scopeOfWorks,
         pipeLines: pipeLines.map(line => ({
           size: line.size,
           meters: line.meters,
@@ -514,6 +537,37 @@ export default function Home() {
                       <p className="text-gray-300 text-sm">{jobData.job.job_description}</p>
                     </div>
                   )}
+                </div>
+              </div>
+
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+
+              {/* Technician & Scope Section */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-white font-semibold mb-2 text-sm">
+                    Technician Name
+                  </label>
+                  <input
+                    type="text"
+                    value={technicianName}
+                    onChange={(e) => setTechnicianName(e.target.value)}
+                    placeholder="e.g., John Smith"
+                    className="w-full bg-dark-lighter/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white text-base placeholder-gray-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-2 text-sm">
+                    Scope of Works
+                  </label>
+                  <textarea
+                    value={scopeOfWorks}
+                    onChange={(e) => setScopeOfWorks(e.target.value)}
+                    placeholder="Describe the work to be performed..."
+                    className="w-full bg-dark-lighter/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white text-base placeholder-gray-500 resize-none focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    rows={4}
+                  />
                 </div>
               </div>
 
@@ -1022,7 +1076,7 @@ export default function Home() {
               </div>
               
               <h3 className="text-2xl font-bold text-white mb-2">Quote Generated!</h3>
-              <p className="text-gray-400 mb-6">Your quote has been sent to Qwilr</p>
+              <p className="text-gray-400 mb-6">Your quote has been sent to Zapier and Qwilr</p>
               
               {qwilrLink ? (
                 <>
