@@ -1,111 +1,172 @@
-// ServiceM8 API Client
-const SERVICEM8_API_BASE = 'https://api.servicem8.com/api_1.0';
+// lib/servicem8.ts
+// This file should be at: lib/servicem8.ts (NOT in the API route)
 
-export interface ServiceM8Job {
-  uuid: string;
-  job_address: string;
-  generated_job_id: string;
-  company_uuid: string;
-}
+export function createServiceM8Client() {
+  const auth = Buffer.from(
+    `${process.env.SERVICEM8_EMAIL}:${process.env.SERVICEM8_PASSWORD}`
+  ).toString('base64');
 
-export interface ServiceM8Company {
-  uuid: string;
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-}
+  const baseURL = 'https://api.servicem8.com/api_1.0';
 
-export interface ServiceM8JobContact {
-  uuid: string;
-  first: string;
-  last: string;
-  email: string;
-  mobile: string;
-  phone: string;
-}
-
-export interface JobData {
-  job: ServiceM8Job;
-  company: ServiceM8Company;
-  contact: ServiceM8JobContact | null;
-}
-
-export class ServiceM8Client {
-  private apiKey: string;
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  private async request<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${SERVICEM8_API_BASE}${endpoint}`, {
-      headers: {
-        'X-API-Key': this.apiKey,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`ServiceM8 API error: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-
-    return response.json();
-  }
-
-  async getJob(jobNumber: string): Promise<ServiceM8Job> {
-    // Search for job by generated_job_id
-    const jobs = await this.request<ServiceM8Job[]>(`/job.json?%24filter=generated_job_id%20eq%20'${jobNumber}'`);
-    
-    if (!jobs || jobs.length === 0) {
-      throw new Error(`Job ${jobNumber} not found`);
-    }
-
-    return jobs[0];
-  }
-
-  async getCompany(companyUuid: string): Promise<ServiceM8Company> {
-    const company = await this.request<ServiceM8Company>(`/company/${companyUuid}.json`);
-    return company;
-  }
-
-  async getJobContact(jobUuid: string): Promise<ServiceM8JobContact | null> {
+  async function getJobData(jobNumber: string) {
     try {
-      // Get job contacts for this job
-      const contacts = await this.request<ServiceM8JobContact[]>(`/jobcontact.json?%24filter=job_uuid%20eq%20'${jobUuid}'`);
-      
-      if (!contacts || contacts.length === 0) {
-        return null;
+      // 1. Search for job by generated_job_id
+      const searchResponse = await fetch(
+        `${baseURL}/job.json?%24filter=generated_job_id%20eq%20'${jobNumber}'`,
+        {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!searchResponse.ok) {
+        throw new Error(`ServiceM8 API error: ${searchResponse.statusText}`);
       }
 
-      // Return the first contact (usually the main contact)
-      return contacts[0];
+      const jobs = await searchResponse.json();
+
+      if (!jobs || jobs.length === 0) {
+        throw new Error(`Job ${jobNumber} not found`);
+      }
+
+      const job = jobs[0];
+
+      // 2. Fetch company data
+      const companyResponse = await fetch(
+        `${baseURL}/company/${job.company_uuid}.json`,
+        {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const company = await companyResponse.json();
+
+      // 3. Fetch contact data (if exists)
+      let contact = null;
+      if (job.contact_uuid) {
+        const contactResponse = await fetch(
+          `${baseURL}/contact/${job.contact_uuid}.json`,
+          {
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        contact = await contactResponse.json();
+      }
+
+      // 4. Fetch assigned staff member
+      let staff = null;
+      
+      // Try method 1: Check if job has assigned_to field
+      if (job.assigned_to) {
+        try {
+          const staffResponse = await fetch(
+            `${baseURL}/staff/${job.assigned_to}.json`,
+            {
+              headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          if (staffResponse.ok) {
+            const staffData = await staffResponse.json();
+            staff = {
+              first: staffData.first || '',
+              last: staffData.last || '',
+              email: staffData.email || '',
+              mobile: staffData.mobile || ''
+            };
+          }
+        } catch (err) {
+          console.log('Could not fetch staff from assigned_to:', err);
+        }
+      }
+
+      // Try method 2: Check jobactivity for assigned staff (if method 1 didn't work)
+      if (!staff) {
+        try {
+          const activityResponse = await fetch(
+            `${baseURL}/jobactivity.json?%24filter=job_uuid%20eq%20'${job.uuid}'%20and%20active%20eq%201&%24orderby=edit_date%20desc&%24top=1`,
+            {
+              headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (activityResponse.ok) {
+            const activities = await activityResponse.json();
+            
+            if (activities && activities.length > 0 && activities[0].staff_uuid) {
+              const staffResponse = await fetch(
+                `${baseURL}/staff/${activities[0].staff_uuid}.json`,
+                {
+                  headers: {
+                    'Authorization': `Basic ${auth}`,
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+
+              if (staffResponse.ok) {
+                const staffData = await staffResponse.json();
+                staff = {
+                  first: staffData.first || '',
+                  last: staffData.last || '',
+                  email: staffData.email || '',
+                  mobile: staffData.mobile || ''
+                };
+              }
+            }
+          }
+        } catch (err) {
+          console.log('Could not fetch staff from jobactivity:', err);
+        }
+      }
+
+      // Return all data including staff
+      return {
+        job: {
+          uuid: job.uuid,
+          job_address: job.job_address || '',
+          generated_job_id: job.generated_job_id,
+          job_description: job.job_description || ''
+        },
+        company: {
+          uuid: company.uuid,
+          name: company.name || '',
+          phone: company.phone || '',
+          email: company.email || '',
+          address: company.address || ''
+        },
+        contact: contact ? {
+          uuid: contact.uuid,
+          first: contact.first || '',
+          last: contact.last || '',
+          email: contact.email || '',
+          mobile: contact.mobile || '',
+          phone: contact.phone || ''
+        } : null,
+        staff: staff
+      };
+
     } catch (error) {
-      console.error('Error fetching job contact:', error);
-      return null;
+      console.error('Error in getJobData:', error);
+      throw error;
     }
   }
 
-  async getJobData(jobNumber: string): Promise<JobData> {
-    const job = await this.getJob(jobNumber);
-    const company = await this.getCompany(job.company_uuid);
-    const contact = await this.getJobContact(job.uuid);
-
-    return {
-      job,
-      company,
-      contact,
-    };
-  }
-}
-
-export function createServiceM8Client(): ServiceM8Client {
-  const apiKey = process.env.SERVICEM8_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('SERVICEM8_API_KEY environment variable is not set');
-  }
-
-  return new ServiceM8Client(apiKey);
+  return {
+    getJobData
+  };
 }
