@@ -5,7 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const quoteData = await request.json();
     
-    // Zapier webhook URL - you'll replace this with your actual Zapier webhook
     const ZAPIER_WEBHOOK_URL = process.env.ZAPIER_WEBHOOK_URL || '';
     
     if (!ZAPIER_WEBHOOK_URL) {
