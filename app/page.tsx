@@ -216,14 +216,20 @@ export default function Home() {
         throw new Error(data.error || 'Failed to fetch job data');
       }
 
+      console.log('ServiceM8 Response:', data); // Debug
       setJobData(data);
       
       // Auto-populate technician name from ServiceM8 staff data
       if (data.staff) {
+        console.log('Staff data found:', data.staff); // Debug
         const staffName = `${data.staff.first} ${data.staff.last}`.trim();
         if (staffName) {
           setTechnicianName(staffName);
         }
+      } else {
+        console.log('No staff data returned from ServiceM8'); // Debug
+        // Fallback to a default
+        setTechnicianName('Drainr Team');
       }
       
       // Auto-populate scope of works from job description
@@ -495,10 +501,18 @@ export default function Home() {
               <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg shadow-primary/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
                 <div className="relative">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-bold">
                       #{jobData.job.generated_job_id}
                     </span>
+                    {technicianName && (
+                      <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-bold flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {technicianName}
+                      </span>
+                    )}
                   </div>
                   <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
                   
@@ -542,33 +556,18 @@ export default function Home() {
 
               <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
 
-              {/* Technician & Scope Section */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-white font-semibold mb-2 text-sm">
-                    Technician Name
-                  </label>
-                  <input
-                    type="text"
-                    value={technicianName}
-                    onChange={(e) => setTechnicianName(e.target.value)}
-                    placeholder="e.g., John Smith"
-                    className="w-full bg-dark-lighter/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white text-base placeholder-gray-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white font-semibold mb-2 text-sm">
-                    Scope of Works
-                  </label>
-                  <textarea
-                    value={scopeOfWorks}
-                    onChange={(e) => setScopeOfWorks(e.target.value)}
-                    placeholder="Describe the work to be performed..."
-                    className="w-full bg-dark-lighter/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white text-base placeholder-gray-500 resize-none focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                    rows={4}
-                  />
-                </div>
+              {/* Scope of Works Section */}
+              <div>
+                <label className="block text-white font-semibold mb-2 text-sm">
+                  Scope of Works
+                </label>
+                <textarea
+                  value={scopeOfWorks}
+                  onChange={(e) => setScopeOfWorks(e.target.value)}
+                  placeholder="Describe the work to be performed..."
+                  className="w-full bg-dark-lighter/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white text-base placeholder-gray-500 resize-none focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  rows={4}
+                />
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
