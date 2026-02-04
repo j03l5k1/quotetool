@@ -46,18 +46,28 @@ export function createServiceM8Client() {
       const company = await companyResponse.json();
       console.log('Company data:', company); // Debug
 
-      // 3. Fetch contact data (if exists)
+      // 3. Fetch contact data from jobcontact table (OLD WORKING METHOD)
       let contact = null;
-      if (job.contact_uuid) {
-        console.log('Fetching contact for UUID:', job.contact_uuid); // Debug
-        const contactResponse = await fetch(
-          `${baseURL}/contact/${job.contact_uuid}.json`,
+      try {
+        console.log('Fetching job contacts for job UUID:', job.uuid); // Debug
+        const contactsResponse = await fetch(
+          `${baseURL}/jobcontact.json?%24filter=job_uuid%20eq%20'${job.uuid}'`,
           { headers: getHeaders() }
         );
-        contact = await contactResponse.json();
-        console.log('Contact data received:', contact); // Debug
-      } else {
-        console.log('No contact_uuid found in job data'); // Debug
+        
+        if (contactsResponse.ok) {
+          const contacts = await contactsResponse.json();
+          console.log('Job contacts received:', contacts); // Debug
+          
+          if (contacts && contacts.length > 0) {
+            contact = contacts[0]; // Use first contact
+            console.log('Using contact:', contact); // Debug
+          } else {
+            console.log('No contacts found for this job'); // Debug
+          }
+        }
+      } catch (err) {
+        console.log('Error fetching job contacts:', err); // Debug
       }
 
       // 4. Fetch assigned staff member
