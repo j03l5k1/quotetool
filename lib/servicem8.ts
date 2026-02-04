@@ -1,4 +1,4 @@
-// lib/servicem8.ts - API KEY VERSION
+// lib/servicem8.ts - API KEY VERSION (TypeScript safe)
 
 export function createServiceM8Client() {
   const apiKey = process.env.SERVICEM8_API_KEY;
@@ -8,18 +8,19 @@ export function createServiceM8Client() {
   }
 
   const baseURL = 'https://api.servicem8.com/api_1.0';
+  
+  // Type-safe headers helper
+  const getHeaders = (): HeadersInit => ({
+    'X-API-Key': apiKey,
+    'Content-Type': 'application/json'
+  });
 
   async function getJobData(jobNumber: string) {
     try {
       // 1. Search for job by generated_job_id
       const searchResponse = await fetch(
         `${baseURL}/job.json?%24filter=generated_job_id%20eq%20'${jobNumber}'`,
-        {
-          headers: {
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: getHeaders() }
       );
 
       if (!searchResponse.ok) {
@@ -38,12 +39,7 @@ export function createServiceM8Client() {
       // 2. Fetch company data
       const companyResponse = await fetch(
         `${baseURL}/company/${job.company_uuid}.json`,
-        {
-          headers: {
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: getHeaders() }
       );
 
       const company = await companyResponse.json();
@@ -53,12 +49,7 @@ export function createServiceM8Client() {
       if (job.contact_uuid) {
         const contactResponse = await fetch(
           `${baseURL}/contact/${job.contact_uuid}.json`,
-          {
-            headers: {
-              'X-API-Key': apiKey,
-              'Content-Type': 'application/json'
-            }
-          }
+          { headers: getHeaders() }
         );
         contact = await contactResponse.json();
       }
@@ -72,12 +63,7 @@ export function createServiceM8Client() {
         try {
           const staffResponse = await fetch(
             `${baseURL}/staff/${job.assigned_to}.json`,
-            {
-              headers: {
-                'X-API-Key': apiKey,
-                'Content-Type': 'application/json'
-              }
-            }
+            { headers: getHeaders() }
           );
           
           if (staffResponse.ok) {
@@ -101,12 +87,7 @@ export function createServiceM8Client() {
         try {
           const activityResponse = await fetch(
             `${baseURL}/jobactivity.json?%24filter=job_uuid%20eq%20'${job.uuid}'%20and%20active%20eq%201&%24orderby=edit_date%20desc&%24top=1`,
-            {
-              headers: {
-                'X-API-Key': apiKey,
-                'Content-Type': 'application/json'
-              }
-            }
+            { headers: getHeaders() }
           );
 
           if (activityResponse.ok) {
@@ -116,12 +97,7 @@ export function createServiceM8Client() {
             if (activities && activities.length > 0 && activities[0].staff_uuid) {
               const staffResponse = await fetch(
                 `${baseURL}/staff/${activities[0].staff_uuid}.json`,
-                {
-                  headers: {
-                    'X-API-Key': apiKey,
-                    'Content-Type': 'application/json'
-                  }
-                }
+                { headers: getHeaders() }
               );
 
               if (staffResponse.ok) {
