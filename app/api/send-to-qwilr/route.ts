@@ -80,7 +80,7 @@ function formatQuoteForQwilr(quoteData: any) {
     selected: true
   }));
 
-  // Create structured data for Qwilr (via Zapier)
+  // Create flattened data for Zapier (easier field mapping)
   return {
     // Page metadata
     pageTitle: `Quote ${jobNumber} - ${customerName}`,
@@ -88,37 +88,28 @@ function formatQuoteForQwilr(quoteData: any) {
     quoteDate: new Date().toISOString(),
     validUntil: validUntil || addDays(new Date(), 30).toISOString(),
     
-    // Customer information
-    customer: {
-      name: customerName,
-      email: customerEmail,
-      phone: customerPhone,
-      address: customerAddress
-    },
+    // Customer information (flattened)
+    customer_name: customerName,
+    customer_email: customerEmail,
+    customer_phone: customerPhone,
+    customer_address: customerAddress,
     
-    // Job information
-    job: {
-      address: jobAddress,
-      notes: notes || ''
-    },
+    // Job information (flattened)
+    job_address: jobAddress,
+    job_notes: notes || '',
     
     // Quote items
     lineItems,
     
-    // Pricing
-    pricing: {
-      subtotal: subtotal || calculateSubtotal(items),
-      gst: gst || (subtotal * 0.1),
-      total: total || (subtotal * 1.1),
-      currency: 'AUD'
-    },
+    // Pricing (flattened)
+    subtotal: subtotal || calculateSubtotal(items),
+    gst: gst || (subtotal * 0.1),
+    total: total || (subtotal * 1.1),
+    currency: 'AUD',
     
     // Additional metadata
-    metadata: {
-      source: 'Drainr Quote Tool',
-      jobNumber,
-      timestamp: new Date().toISOString()
-    }
+    source: 'Drainr Quote Tool',
+    timestamp: new Date().toISOString()
   };
 }
 
