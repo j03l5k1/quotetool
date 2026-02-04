@@ -1,10 +1,11 @@
-// lib/servicem8.ts
-// This file should be at: lib/servicem8.ts (NOT in the API route)
+// lib/servicem8.ts - API KEY VERSION
 
 export function createServiceM8Client() {
-  const auth = Buffer.from(
-    `${process.env.SERVICEM8_EMAIL}:${process.env.SERVICEM8_PASSWORD}`
-  ).toString('base64');
+  const apiKey = process.env.SERVICEM8_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('SERVICEM8_API_KEY environment variable is not set');
+  }
 
   const baseURL = 'https://api.servicem8.com/api_1.0';
 
@@ -15,7 +16,7 @@ export function createServiceM8Client() {
         `${baseURL}/job.json?%24filter=generated_job_id%20eq%20'${jobNumber}'`,
         {
           headers: {
-            'Authorization': `Basic ${auth}`,
+            'X-API-Key': apiKey,
             'Content-Type': 'application/json'
           }
         }
@@ -32,13 +33,14 @@ export function createServiceM8Client() {
       }
 
       const job = jobs[0];
+      console.log('Job data:', job); // Debug
 
       // 2. Fetch company data
       const companyResponse = await fetch(
         `${baseURL}/company/${job.company_uuid}.json`,
         {
           headers: {
-            'Authorization': `Basic ${auth}`,
+            'X-API-Key': apiKey,
             'Content-Type': 'application/json'
           }
         }
@@ -53,7 +55,7 @@ export function createServiceM8Client() {
           `${baseURL}/contact/${job.contact_uuid}.json`,
           {
             headers: {
-              'Authorization': `Basic ${auth}`,
+              'X-API-Key': apiKey,
               'Content-Type': 'application/json'
             }
           }
@@ -66,12 +68,13 @@ export function createServiceM8Client() {
       
       // Try method 1: Check if job has assigned_to field
       if (job.assigned_to) {
+        console.log('Job has assigned_to:', job.assigned_to); // Debug
         try {
           const staffResponse = await fetch(
             `${baseURL}/staff/${job.assigned_to}.json`,
             {
               headers: {
-                'Authorization': `Basic ${auth}`,
+                'X-API-Key': apiKey,
                 'Content-Type': 'application/json'
               }
             }
@@ -79,6 +82,7 @@ export function createServiceM8Client() {
           
           if (staffResponse.ok) {
             const staffData = await staffResponse.json();
+            console.log('Staff data from assigned_to:', staffData); // Debug
             staff = {
               first: staffData.first || '',
               last: staffData.last || '',
@@ -93,12 +97,13 @@ export function createServiceM8Client() {
 
       // Try method 2: Check jobactivity for assigned staff (if method 1 didn't work)
       if (!staff) {
+        console.log('Trying jobactivity method...'); // Debug
         try {
           const activityResponse = await fetch(
             `${baseURL}/jobactivity.json?%24filter=job_uuid%20eq%20'${job.uuid}'%20and%20active%20eq%201&%24orderby=edit_date%20desc&%24top=1`,
             {
               headers: {
-                'Authorization': `Basic ${auth}`,
+                'X-API-Key': apiKey,
                 'Content-Type': 'application/json'
               }
             }
@@ -106,13 +111,14 @@ export function createServiceM8Client() {
 
           if (activityResponse.ok) {
             const activities = await activityResponse.json();
+            console.log('Job activities:', activities); // Debug
             
             if (activities && activities.length > 0 && activities[0].staff_uuid) {
               const staffResponse = await fetch(
                 `${baseURL}/staff/${activities[0].staff_uuid}.json`,
                 {
                   headers: {
-                    'Authorization': `Basic ${auth}`,
+                    'X-API-Key': apiKey,
                     'Content-Type': 'application/json'
                   }
                 }
@@ -120,6 +126,7 @@ export function createServiceM8Client() {
 
               if (staffResponse.ok) {
                 const staffData = await staffResponse.json();
+                console.log('Staff data from activity:', staffData); // Debug
                 staff = {
                   first: staffData.first || '',
                   last: staffData.last || '',
@@ -133,6 +140,8 @@ export function createServiceM8Client() {
           console.log('Could not fetch staff from jobactivity:', err);
         }
       }
+
+      console.log('Final staff data:', staff); // Debug
 
       // Return all data including staff
       return {
