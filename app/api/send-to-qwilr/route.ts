@@ -30,12 +30,9 @@ export async function POST(request: NextRequest) {
       throw new Error(`Zapier webhook failed: ${response.statusText}`);
     }
 
-    const result = await response.json();
-    
     return NextResponse.json({
       success: true,
-      message: 'Quote sent to Qwilr successfully',
-      data: result
+      message: 'Quote sent to Qwilr successfully'
     });
 
   } catch (error) {
@@ -51,77 +48,110 @@ export async function POST(request: NextRequest) {
 }
 
 function formatQuoteForQwilr(quoteData: any) {
-  // Extract key information from your quote
   const {
     jobNumber,
-    customerName,
-    customerEmail,
-    customerPhone,
-    customerAddress,
-    jobAddress,
-    items = [],
-    subtotal,
-    gst,
-    total,
-    notes,
-    validUntil
+    jobData,
+    pipeLines = [],
+    digging = { enabled: false, hours: 0, total: 0 },
+    extras = [],
+    totals
   } = quoteData;
 
-  // Format line items for Qwilr
-  const lineItems = items.map((item: any, index: number) => ({
-    id: `item_${index + 1}`,
-    name: item.description || item.name,
-    description: item.notes || '',
-    quantity: item.quantity || 1,
-    unitPrice: item.unitPrice || item.price,
-    unitLabel: item.unit || 'unit',
-    total: item.total || (item.quantity * item.unitPrice),
-    optional: false,
-    selected: true
-  }));
+  // Build line items array
+  const lineItems = [];
 
-  // Create flattened data for Zapier (easier field mapping)
+  // 1. Add setup costs as first line item (pre-GST)
+  const setupCostPreGST = 2272.73;
+  lineItems.push({
+    name: 'Setup & Service',
+    description: `• Bring all equipment to and from site
+• High-pressure water jet & clean of all debris and roots in drain
+• Mechanical clean with Picote tool
+• CCTV inspection
+• Hot water cure liner
+• Final CCTV checks to confirm the reline was successful
+• Reopen any branch connections as needed with robotic cutter
+• CCTV post-work footage
+• Clean up the site and take away all rubbish
+• Pack up and return all equipment to the depot`,
+    quantity: 1,
+    unitPrice: setupCostPreGST,
+    total: setupCostPreGST
+  });
+
+  // 2. Add pipe lines (pre-GST prices)
+  pipeLines.forEach((line: any, index: number) => {
+    const lineTotal = line.total || 0;
+    // Convert to pre-GST
+    const preGSTTotal = lineTotal / 1.1;
+    
+    lineItems.push({
+      name: `${line.size} Pipe Relining - Line ${index + 1}`,
+      description: `${line.meters}m of ${line.size} pipe relining with 50-year warranty${line.junctions > 0 ? ` (includes ${line.junctions} junction${line.junctions !== 1 ? 's' : ''})` : ''}`,
+      quantity: 1,
+      unitPrice: preGSTTotal,
+      total: preGSTTotal
+    });
+  });
+
+  // 3. Add digging if enabled (pre-GST)
+  if (digging.enabled && digging.hours > 0) {
+    const diggingPreGST = digging.total / 1.1;
+    lineItems.push({
+      name: 'Excavation Work',
+      description: `${digging.hours} hours of digging and excavation work`,
+      quantity: digging.hours,
+      unitPrice: diggingPreGST / digging.hours,
+      total: diggingPreGST
+    });
+  }
+
+  // 4. Add extras (pre-GST)
+  extras.forEach((item: any, index: number) => {
+    const extraPreGST = item.amount / 1.1;
+    lineItems.push({
+      name: item.note || `Additional Item ${index + 1}`,
+      description: item.note || '',
+      quantity: 1,
+      unitPrice: extraPreGST,
+      total: extraPreGST
+    });
+  });
+
+  // Calculate totals (pre-GST)
+  const subtotalPreGST = lineItems.reduce((sum, item) => sum + item.total, 0);
+  const gstAmount = subtotalPreGST * 0.1;
+  const totalIncGST = subtotalPreGST + gstAmount;
+
+  // Return flattened data for Zapier
   return {
     // Page metadata
-    pageTitle: `Quote ${jobNumber} - ${customerName}`,
+    pageTitle: `Quote ${jobNumber} - ${jobData?.company?.name || 'Customer'}`,
     jobNumber,
     quoteDate: new Date().toISOString(),
-    validUntil: validUntil || addDays(new Date(), 30).toISOString(),
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     
     // Customer information (flattened)
-    customer_name: customerName,
-    customer_email: customerEmail,
-    customer_phone: customerPhone,
-    customer_address: customerAddress,
+    customer_name: jobData?.company?.name || '',
+    customer_email: jobData?.contact?.email || jobData?.company?.email || '',
+    customer_phone: jobData?.contact?.mobile || jobData?.contact?.phone || jobData?.company?.phone || '',
+    customer_address: jobData?.company?.address || '',
     
     // Job information (flattened)
-    job_address: jobAddress,
-    job_notes: notes || '',
+    job_address: jobData?.job?.job_address || '',
+    job_notes: jobData?.job?.job_description || '',
     
-    // Quote items
+    // Line items
     lineItems,
     
-    // Pricing (flattened)
-    subtotal: subtotal || calculateSubtotal(items),
-    gst: gst || (subtotal * 0.1),
-    total: total || (subtotal * 1.1),
+    // Pricing (all pre-GST, then GST, then total)
+    subtotal: Math.round(subtotalPreGST * 100) / 100,
+    gst: Math.round(gstAmount * 100) / 100,
+    total: Math.round(totalIncGST * 100) / 100,
     currency: 'AUD',
     
     // Additional metadata
     source: 'Drainr Quote Tool',
     timestamp: new Date().toISOString()
   };
-}
-
-function calculateSubtotal(items: any[]): number {
-  return items.reduce((sum, item) => {
-    const itemTotal = item.total || (item.quantity || 1) * (item.unitPrice || item.price || 0);
-    return sum + itemTotal;
-  }, 0);
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
 }
