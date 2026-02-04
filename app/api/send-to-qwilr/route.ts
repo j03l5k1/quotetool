@@ -17,6 +17,8 @@ export async function POST(request: NextRequest) {
     // Format the data for Qwilr
     const qwilrData = formatQuoteForQwilr(quoteData);
     
+    console.log('Sending to Zapier:', JSON.stringify(qwilrData, null, 2)); // Debug
+    
     // Send to Zapier
     const response = await fetch(ZAPIER_WEBHOOK_URL, {
       method: 'POST',
@@ -54,8 +56,17 @@ function formatQuoteForQwilr(quoteData: any) {
     pipeLines = [],
     digging = { enabled: false, hours: 0, total: 0 },
     extras = [],
-    totals
+    totals,
+    technicianName = '',
+    scopeOfWorks = ''
   } = quoteData;
+
+  // Debug logging
+  console.log('=== FORMAT QUOTE DEBUG ===');
+  console.log('technicianName received:', technicianName);
+  console.log('jobData.contact:', jobData?.contact);
+  console.log('jobData.company:', jobData?.company);
+  console.log('========================');
 
   // Build line items array
   const lineItems = [];
@@ -140,6 +151,10 @@ function formatQuoteForQwilr(quoteData: any) {
     // Job information (flattened)
     job_address: jobData?.job?.job_address || '',
     job_notes: jobData?.job?.job_description || '',
+    
+    // Technician and scope
+    technician_name: technicianName || 'Drainr Team',
+    scope_of_works: scopeOfWorks || jobData?.job?.job_description || '',
     
     // Line items
     lineItems,
