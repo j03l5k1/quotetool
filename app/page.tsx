@@ -51,19 +51,18 @@ interface QuoteDraft {
   timestamp: number;
 }
 
-// Pricing configuration - TODO: Make this configurable
+// Pricing configuration (PRE-GST PRICES)
 const PRICING = {
+  setup: 2272.73, // Fixed setup cost (pre-GST)
   '100mm': {
-    setup: 2500,
-    perMeter: 450,
-    perJunction: 750,
+    perMeter: 409.09,   // Pre-GST (was 450)
+    perJunction: 681.82, // Pre-GST (was 750)
   },
   '150mm': {
-    setup: 2600,
-    perMeter: 550,
-    perJunction: 850,
+    perMeter: 500,      // Pre-GST (was 550)
+    perJunction: 772.73, // Pre-GST (was 850)
   },
-  diggingPerHour: 180,
+  diggingPerHour: 163.64, // Pre-GST (was 180)
 };
 
 // Icons
@@ -153,7 +152,7 @@ export default function Home() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [undoStack, setUndoStack] = useState<PipeLine[]>([]);
   const [showUndo, setShowUndo] = useState(false);
-  const [summaryCollapsed, setSummaryCollapsed] = useState(true); // Default to collapsed
+  const [summaryCollapsed, setSummaryCollapsed] = useState(true);
 
   // Quote generation state
   const [generatingQuote, setGeneratingQuote] = useState(false);
@@ -183,7 +182,6 @@ export default function Home() {
     const saved = localStorage.getItem('quoteDraft');
     if (saved) {
       const draft: QuoteDraft = JSON.parse(saved);
-      // Only restore if less than 24 hours old
       if (Date.now() - draft.timestamp < 24 * 60 * 60 * 1000) {
         setJobNumber(draft.jobNumber);
         setJobData(draft.jobData);
@@ -227,24 +225,32 @@ export default function Home() {
         jobNumber,
         jobData,
         pipeLines: pipeLines.map(line => ({
-          ...line,
-          total: calculateLineTotal(line)
+          size: line.size,
+          meters: line.meters,
+          junctions: line.junctions,
+          total: calculateLineTotal(line) // Pre-GST
         })),
         digging: {
           enabled: diggingEnabled,
           hours: diggingHours,
-          total: diggingTotal
+          total: diggingTotal // Pre-GST
         },
-        extras: extraItems,
+        extras: extraItems.map(item => ({
+          note: item.note,
+          amount: item.amount // Already pre-GST
+        })),
         totals: {
+          setupCost: PRICING.setup,
           pipeWork: pipeWorkTotal,
           digging: diggingTotal,
           extras: extrasTotal,
-          grandTotal: grandTotal
+          subtotal: subtotal, // pre-GST
+          gst: gst,
+          grandTotal: grandTotal // inc GST
         }
       };
 
-      const response = await fetch('/api/generate-quote', {
+      const response = await fetch('/api/send-to-qwilr', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -258,8 +264,7 @@ export default function Home() {
         throw new Error(result.error || 'Failed to generate quote');
       }
 
-      // Show success modal with Qwilr link
-      setQwilrLink(result.qwilrLink);
+      setQwilrLink(result.qwilrLink || null);
       setQuoteGenerated(true);
       
     } catch (err) {
@@ -330,11 +335,10 @@ export default function Home() {
     ));
   };
 
-  // Calculate totals
+  // Calculate line total (NO setup cost here - just meters + junctions, pre-GST)
   const calculateLineTotal = (line: PipeLine) => {
     const pricing = PRICING[line.size];
     return (
-      pricing.setup +
       (line.meters * pricing.perMeter) +
       (line.junctions * pricing.perJunction)
     );
@@ -343,17 +347,21 @@ export default function Home() {
   const getLineBreakdown = (line: PipeLine) => {
     const pricing = PRICING[line.size];
     return {
-      setup: pricing.setup,
       meters: line.meters * pricing.perMeter,
       junctions: line.junctions * pricing.perJunction,
       total: calculateLineTotal(line),
     };
   };
 
+  // Calculate totals (all pre-GST)
   const pipeWorkTotal = pipeLines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
   const diggingTotal = diggingEnabled ? diggingHours * PRICING.diggingPerHour : 0;
   const extrasTotal = extraItems.reduce((sum, item) => sum + item.amount, 0);
-  const grandTotal = pipeWorkTotal + diggingTotal + extrasTotal;
+  
+  // Add setup cost to subtotal
+  const subtotal = PRICING.setup + pipeWorkTotal + diggingTotal + extrasTotal;
+  const gst = subtotal * 0.1;
+  const grandTotal = subtotal + gst;
 
   // Validation
   const isValid = pipeLines.length > 0 && pipeLines.every(line => line.meters > 0);
@@ -374,7 +382,6 @@ export default function Home() {
             Drainr Quote Tool
           </h1>
 
-          {/* Auto-save indicator */}
           {lastSaved && (
             <div className="flex items-center justify-center gap-2 text-gray-500 text-xs mt-2">
               <Icons.Clock />
@@ -385,7 +392,6 @@ export default function Home() {
 
         {/* Main Card */}
         <div className="bg-gradient-to-br from-dark-card/90 to-dark-card/70 backdrop-blur-xl rounded-3xl border border-gray-800/50 shadow-2xl p-5 sm:p-7">
-          {/* Job Number Input */}
           {!jobData ? (
             <>
               <form onSubmit={handleFetchJob} className="space-y-4">
@@ -420,7 +426,6 @@ export default function Home() {
                 </div>
               </form>
 
-              {/* Show draft resume option */}
               {lastSaved && !jobData && (
                 <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-2xl">
                   <p className="text-primary text-sm font-semibold">Continue where you left off?</p>
@@ -430,7 +435,7 @@ export default function Home() {
             </>
           ) : (
             <div className="space-y-6 animate-fadeIn">
-              {/* Action Buttons - above card */}
+              {/* Action Buttons */}
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => {
@@ -463,7 +468,7 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Job Summary */}
+              {/* Job Summary - keeping existing code */}
               <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg shadow-primary/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
                 <div className="relative">
@@ -474,20 +479,16 @@ export default function Home() {
                   </div>
                   <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
                   
-                  {/* Address, Email, Phone - stacked with separators */}
                   <div className="space-y-2.5">
-                    {/* Address */}
                     <div className="flex items-start gap-2 text-gray-300">
                       <Icons.MapPin />
                       <p className="text-sm leading-snug">{jobData.job.job_address}</p>
                     </div>
                     
-                    {/* Separator */}
                     {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
                       <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
                     )}
                     
-                    {/* Email */}
                     {jobData.contact?.email && (
                       <div className="flex items-start gap-2 text-gray-300">
                         <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -497,7 +498,6 @@ export default function Home() {
                       </div>
                     )}
                     
-                    {/* Phone */}
                     {(jobData.contact?.mobile || jobData.contact?.phone) && (
                       <div className="flex items-center gap-2 text-gray-300">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -508,7 +508,6 @@ export default function Home() {
                     )}
                   </div>
                   
-                  {/* Job Notes */}
                   {jobData.job.job_description && (
                     <div className="mt-3 pt-3 border-t border-primary/20">
                       <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
@@ -524,7 +523,7 @@ export default function Home() {
                 Quote Details
               </h2>
 
-              {/* Pipe Lines */}
+              {/* Pipe Lines - keeping most of existing code, just updating breakdown */}
               <div className="mb-6">
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20 shadow-lg">
                   <div className="flex items-center justify-between mb-4 gap-3">
@@ -545,7 +544,6 @@ export default function Home() {
 
                   <div className="space-y-3">
                     {[...pipeLines].reverse().map((line, index) => {
-                      // Different colors for each line - newest lines get first colors
                       const lineColors = [
                         'bg-cyan-500/20 border-cyan-500/40 text-cyan-400',
                         'bg-blue-500/20 border-blue-500/40 text-blue-400',
@@ -554,7 +552,6 @@ export default function Home() {
                         'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
                         'bg-orange-500/20 border-orange-500/40 text-orange-400',
                       ];
-                      // Use modulo on the actual line position, not the reversed index
                       const linePosition = pipeLines.findIndex(l => l.id === line.id);
                       const colorClass = lineColors[linePosition % lineColors.length];
                       
@@ -667,18 +664,18 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Line Total with Breakdown */}
+                        {/* Line Total with Breakdown - UPDATED to show NO setup */}
                         <div className="pt-4 border-t border-gray-700/50">
                           <button
                             onClick={() => setShowBreakdown(!showBreakdown)}
                             className="w-full flex justify-between items-center group"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-400 font-semibold text-sm">Line Total</span>
+                              <span className="text-gray-400 font-semibold text-sm">Line Total (ex GST)</span>
                               <Icons.Info />
                             </div>
                             <span className="text-primary font-bold text-2xl group-hover:scale-105 transition-transform">
-                              ${calculateLineTotal(line).toLocaleString()}
+                              ${calculateLineTotal(line).toFixed(2)}
                             </span>
                           </button>
                           
@@ -689,17 +686,13 @@ export default function Home() {
                                 return (
                                   <>
                                     <div className="flex justify-between text-gray-400">
-                                      <span>Setup</span>
-                                      <span>${breakdown.setup.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between text-gray-400">
-                                      <span>{line.meters}m × ${PRICING[line.size].perMeter}/m</span>
-                                      <span>${breakdown.meters.toLocaleString()}</span>
+                                      <span>{line.meters}m × ${PRICING[line.size].perMeter.toFixed(2)}/m</span>
+                                      <span>${breakdown.meters.toFixed(2)}</span>
                                     </div>
                                     {line.junctions > 0 && (
                                       <div className="flex justify-between text-gray-400">
-                                        <span>{line.junctions} junction{line.junctions !== 1 ? 's' : ''} × ${PRICING[line.size].perJunction}</span>
-                                        <span>${breakdown.junctions.toLocaleString()}</span>
+                                        <span>{line.junctions} junction{line.junctions !== 1 ? 's' : ''} × ${PRICING[line.size].perJunction.toFixed(2)}</span>
+                                        <span>${breakdown.junctions.toFixed(2)}</span>
                                       </div>
                                     )}
                                   </>
@@ -715,7 +708,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Digging Section */}
+              {/* Digging Section - update display text */}
               <div className="mb-6">
                 <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl p-4 border border-orange-500/20 shadow-lg">
                   <div className="flex items-center justify-between mb-4 gap-3">
@@ -772,8 +765,8 @@ export default function Home() {
                       />
                       <div className="pt-4 border-t border-orange-500/20">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-300 font-semibold text-sm">{diggingHours}h × $180/hr</span>
-                          <span className="text-orange-400 font-bold text-2xl">${diggingTotal.toLocaleString()}</span>
+                          <span className="text-gray-300 font-semibold text-sm">{diggingHours}h × ${PRICING.diggingPerHour.toFixed(2)}/hr (ex GST)</span>
+                          <span className="text-orange-400 font-bold text-2xl">${diggingTotal.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -781,7 +774,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Extras Section */}
+              {/* Extras Section - keeping existing code */}
               {extraItems.length === 0 ? (
                 <button
                   onClick={addExtraItem}
@@ -794,7 +787,7 @@ export default function Home() {
                     <h3 className="text-base font-bold text-white">Add Extras</h3>
                     <Icons.Plus />
                   </div>
-                  <p className="text-gray-400 text-sm mt-2">Materials, equipment, etc.</p>
+                  <p className="text-gray-400 text-sm mt-2">Materials, equipment, etc. (enter ex-GST amount)</p>
                 </button>
               ) : (
                 <div className="mb-6">
@@ -837,7 +830,7 @@ export default function Home() {
                           </div>
                           <div className="space-y-3">
                             <div>
-                              <label className="block text-gray-300 font-semibold mb-2 text-sm">Amount</label>
+                              <label className="block text-gray-300 font-semibold mb-2 text-sm">Amount (ex GST)</label>
                               <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-lg font-bold">$</span>
                                 <input
@@ -871,7 +864,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div className="mb-5 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl backdrop-blur-sm animate-shake">
               <p className="text-red-400 font-medium">{error}</p>
@@ -879,13 +871,12 @@ export default function Home() {
           )}
         </div>
         
-        {/* Spacer for sticky footer - ensures content isn't hidden */}
         {jobData && pipeLines.length > 0 && (
           <div className="h-[160px]" />
         )}
       </div>
 
-      {/* Sticky Summary Footer */}
+      {/* Sticky Summary Footer - UPDATED with proper breakdown */}
       {jobData && pipeLines.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent py-2 pb-safe z-50 animate-slideUp">
           <div className="max-w-4xl mx-auto px-3">
@@ -893,7 +884,6 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
               
               <div className="relative">
-                {/* Collapsed View */}
                 {summaryCollapsed ? (
                   <div className="space-y-2">
                     <button
@@ -907,56 +897,70 @@ export default function Home() {
                     </button>
                     <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-2.5 border-2 border-emerald-500/40 mx-auto max-w-xs">
                       <div className="flex items-center justify-between">
-                        <span className="text-emerald-200 font-bold text-sm">Total</span>
+                        <span className="text-emerald-200 font-bold text-sm">Total (inc GST)</span>
                         <span className="text-3xl font-bold text-emerald-300 leading-none">
-                          ${grandTotal.toLocaleString()}
+                          ${grandTotal.toFixed(2)}
                         </span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <>
-                    {/* Expanded View */}
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-base font-bold text-white">
-                        Summary
-                      </h3>
+                      <h3 className="text-base font-bold text-white">Summary</h3>
                     </div>
                     
                     <div className="space-y-1 mb-2">
+                      {/* Setup Cost */}
+                      <div className="flex justify-between items-center gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
+                        <span className="font-medium">Setup & Service</span>
+                        <span className="font-bold whitespace-nowrap">${PRICING.setup.toFixed(2)}</span>
+                      </div>
+
+                      {/* Pipe Lines */}
                       {pipeLines.map((line, index) => (
                         <div key={line.id} className="flex justify-between items-start gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                           <span className="font-medium leading-tight flex-1">
-                            Line {pipeLines.length - index} - {line.meters}m of {line.size} pipe relining (50yr warranty)
+                            Line {pipeLines.length - index} - {line.meters}m of {line.size}
+                            {line.junctions > 0 && ` (${line.junctions} junction${line.junctions !== 1 ? 's' : ''})`}
                           </span>
-                          <span className="font-bold whitespace-nowrap">${calculateLineTotal(line).toLocaleString()}</span>
+                          <span className="font-bold whitespace-nowrap">${calculateLineTotal(line).toFixed(2)}</span>
                         </div>
                       ))}
+
+                      {/* Digging */}
                       {diggingEnabled && diggingHours > 0 && (
                         <div className="flex justify-between items-center gap-2 text-orange-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
-                          <span className="font-medium">Digging ({diggingHours}h)</span>
-                          <span className="font-bold whitespace-nowrap">${diggingTotal.toLocaleString()}</span>
+                          <span className="font-medium">Excavation ({diggingHours}h)</span>
+                          <span className="font-bold whitespace-nowrap">${diggingTotal.toFixed(2)}</span>
                         </div>
                       )}
-                      {extraItems.length > 0 && (
-                        <>
-                          {extraItems.map((item, index) => (
-                            <div key={item.id} className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
-                              <span className="font-medium leading-tight flex-1">
-                                {item.note || `Extra ${extraItems.length - index}`}
-                              </span>
-                              <span className="font-bold whitespace-nowrap">${item.amount.toLocaleString()}</span>
-                            </div>
-                          ))}
-                        </>
-                      )}
+
+                      {/* Extras */}
+                      {extraItems.map((item, index) => (
+                        <div key={item.id} className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
+                          <span className="font-medium leading-tight flex-1">
+                            {item.note || `Extra ${extraItems.length - index}`}
+                          </span>
+                          <span className="font-bold whitespace-nowrap">${item.amount.toFixed(2)}</span>
+                        </div>
+                      ))}
                     </div>
                     
-                    <div className="pt-2 border-t-2 border-primary/30 mb-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white font-bold text-base">TOTAL</span>
-                        <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent animate-pulse-slow">
-                          ${grandTotal.toLocaleString()}
+                    {/* Totals Breakdown */}
+                    <div className="pt-2 border-t-2 border-primary/30 mb-2 space-y-1">
+                      <div className="flex justify-between items-center text-white text-sm">
+                        <span className="font-semibold">Subtotal (ex GST)</span>
+                        <span className="font-bold">${subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-gray-300 text-sm">
+                        <span className="font-semibold">GST (10%)</span>
+                        <span className="font-bold">${gst.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-primary/20">
+                        <span className="text-white font-bold text-base">TOTAL (inc GST)</span>
+                        <span className="text-2xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
+                          ${grandTotal.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -981,10 +985,10 @@ export default function Home() {
                   {generatingQuote ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-dark border-t-transparent rounded-full animate-spin" />
-                      <span>Generating...</span>
+                      <span>Sending to Qwilr...</span>
                     </div>
                   ) : (
-                    'Generate Quote'
+                    'Send to Qwilr'
                   )}
                 </button>
               </div>
@@ -993,7 +997,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Undo Toast */}
+      {/* Keeping all your existing modals and toasts */}
       {showUndo && (
         <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp">
           <div className="flex items-center gap-4">
@@ -1009,18 +1013,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* Quote Generated Success Modal */}
       {quoteGenerated && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-gradient-to-br from-dark-card to-dark-lighter border-2 border-primary/30 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-primary/20 animate-slideUp">
             <div className="text-center">
-              {/* Success Icon */}
               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center mb-4">
                 <Icons.Check />
               </div>
               
               <h3 className="text-2xl font-bold text-white mb-2">Quote Generated!</h3>
-              <p className="text-gray-400 mb-6">Your quote has been sent to Zapier and Qwilr</p>
+              <p className="text-gray-400 mb-6">Your quote has been sent to Qwilr</p>
               
               {qwilrLink ? (
                 <>
@@ -1079,7 +1081,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Quote Error Toast */}
       {quoteError && (
         <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-red-500/20 border-2 border-red-500/50 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp max-w-md">
           <div className="flex items-start gap-3">
