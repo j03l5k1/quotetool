@@ -1156,6 +1156,50 @@ export default function Home() {
         </div>
       )}
 
+      import { saveQuoteToDatabase, generateQuoteUrl } from '@/lib/quote-saver';
+
+// After you calculate the quote...
+const quoteData = {
+  quoteNumber: jobNumber, // or generate one
+  client: {
+    name: company.name,
+    email: company.email,
+    phone: company.phone,
+  },
+  property: {
+    address: job.job_address,
+    suburb: "Seven Hills", // extract from address
+    postcode: "2147", // extract from address
+    state: "NSW", // extract from address
+  },
+  technician: {
+    name: "Joel Martinez", // or get from user
+    phone: "0409 323 277",
+  },
+  assessment: {
+    findings: "Structural defects identified requiring immediate attention",
+    recommendation: "CCTV inspection revealed deterioration...",
+  },
+  lineItems: [
+    // your calculated line items
+  ],
+  totals: {
+    subtotal: calculatedSubtotal,
+    gst: calculatedGST,
+    total: calculatedTotal,
+  },
+};
+
+// Save to database
+const result = await saveQuoteToDatabase(quoteData);
+
+if (result.success) {
+  // Generate shareable URL
+  const quoteUrl = generateQuoteUrl(quoteData);
+  console.log('Quote saved! Share this URL:', quoteUrl);
+  // Show this URL to the user to copy/send
+}
+
       <style jsx global>{`
         @keyframes fadeIn {
           from { opacity: 0; }
