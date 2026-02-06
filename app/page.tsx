@@ -141,7 +141,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [jobData, setJobData] = useState<JobData | null>(null);
-  
+
   // Quote details
   const [pipeLines, setPipeLines] = useState<PipeLine[]>([{
     id: Date.now().toString(),
@@ -165,7 +165,7 @@ export default function Home() {
   // Quote generation state
   const [generatingQuote, setGeneratingQuote] = useState(false);
   const [quoteGenerated, setQuoteGenerated] = useState(false);
-  const [qwilrLink, setQwilrLink] = useState<string | null>(null);
+  const [qwilrLink, setQwilrLink] = useState<string | null>(null); // now used for viewer link
   const [quoteError, setQuoteError] = useState('');
 
   // Auto-save draft to localStorage
@@ -218,20 +218,17 @@ export default function Home() {
 
       console.log('ServiceM8 Response:', data); // Debug
       setJobData(data);
-      
+
       // Auto-populate technician name from ServiceM8 staff data
       if (data.staff) {
         console.log('Staff data found:', data.staff); // Debug
         const staffName = `${data.staff.first} ${data.staff.last}`.trim();
-        if (staffName) {
-          setTechnicianName(staffName);
-        }
+        if (staffName) setTechnicianName(staffName);
       } else {
         console.log('No staff data returned from ServiceM8'); // Debug
-        // Fallback to a default
         setTechnicianName('Drainr Team');
       }
-      
+
       // Auto-populate scope of works from job description
       if (data.job?.job_description) {
         setScopeOfWorks(data.job.job_description);
@@ -243,14 +240,15 @@ export default function Home() {
     }
   };
 
+  // ✅ UPDATED: publish to viewer (civiro-quotes) via /api/generate-quote and return publicUrl
   const handleGenerateQuote = async () => {
     setGeneratingQuote(true);
     setQuoteError('');
-    
+    setQuoteGenerated(false);
+    setQwilrLink(null);
+
     try {
-      if (!jobData) {
-        throw new Error('No job data available');
-      }
+      if (!jobData) throw new Error('No job data available');
 
       const quotePayload = {
         job_number: jobNumber,
@@ -284,31 +282,41 @@ export default function Home() {
         grand_total: grandTotal
       };
 
-      const response = await fetch('/api/quotes', {
+      const response = await fetch('/api/generate-quote', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quotePayload),
       });
 
-      const result = await response.json();
+      const raw = await response.text();
+      let result: any = {};
+      try { result = JSON.parse(raw); } catch {}
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to save quote');
+        throw new Error(result?.error || `Failed to publish (${response.status})`);
       }
 
+      if (!result?.publicUrl) {
+        throw new Error('No publicUrl returned from server');
+      }
+
+      // Show modal + store link (reusing qwilrLink var for MVP)
+      setQwilrLink(result.publicUrl);
+      setQuoteGenerated(true);
+
+      // copy + open (best effort)
+      try { await navigator.clipboard.writeText(result.publicUrl); } catch {}
+      try { window.open(result.publicUrl, '_blank'); } catch {}
+
+      // clear draft once published
       localStorage.removeItem('quoteDraft');
-      window.location.href = `/quotes/${result.id}`;
-      
+
     } catch (err) {
       setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
     } finally {
       setGeneratingQuote(false);
     }
   };
-
-  // ... other code above ...
 
   const addPipeLine = () => {
     const newLine: PipeLine = {
@@ -339,7 +347,7 @@ export default function Home() {
   };
 
   const updatePipeLine = (id: string, field: keyof PipeLine, value: any) => {
-    setPipeLines(pipeLines.map(line => 
+    setPipeLines(pipeLines.map(line =>
       line.id === id ? { ...line, [field]: value } : line
     ));
   };
@@ -366,7 +374,7 @@ export default function Home() {
   };
 
   const updateExtraItem = (id: string, field: keyof ExtraItem, value: any) => {
-    setExtraItems(extraItems.map(item => 
+    setExtraItems(extraItems.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -393,7 +401,7 @@ export default function Home() {
   const pipeWorkTotal = pipeLines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
   const diggingTotal = diggingEnabled ? diggingHours * PRICING.diggingPerHour : 0;
   const extrasTotal = extraItems.reduce((sum, item) => sum + item.amount, 0);
-  
+
   // Add setup cost to subtotal
   const subtotal = PRICING.setup + pipeWorkTotal + diggingTotal + extrasTotal;
   const gst = subtotal * 0.1;
@@ -413,7 +421,7 @@ export default function Home() {
               Quote Builder
             </span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
             Drainr Quote Tool
           </h1>
@@ -434,7 +442,7 @@ export default function Home() {
                 <label className="block text-white font-bold mb-3 text-base">
                   ServiceM8 Job Number
                 </label>
-                
+
                 <div className="flex gap-3">
                   <input
                     type="text"
@@ -446,7 +454,7 @@ export default function Home() {
                     required
                     autoFocus
                   />
-                  
+
                   <button
                     type="submit"
                     disabled={loading || !jobNumber}
@@ -504,7 +512,7 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Job Summary - keeping existing code */}
+              {/* Job Summary */}
               <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20 shadow-lg shadow-primary/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
                 <div className="relative">
@@ -522,17 +530,17 @@ export default function Home() {
                     )}
                   </div>
                   <p className="text-white font-bold text-lg mb-3">{jobData.company.name}</p>
-                  
+
                   <div className="space-y-2.5">
                     <div className="flex items-start gap-2 text-gray-300">
                       <Icons.MapPin />
                       <p className="text-sm leading-snug">{jobData.job.job_address}</p>
                     </div>
-                    
+
                     {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
                       <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
                     )}
-                    
+
                     {jobData.contact?.email && (
                       <div className="flex items-start gap-2 text-gray-300">
                         <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -541,7 +549,7 @@ export default function Home() {
                         <p className="text-sm break-all leading-snug">{jobData.contact.email}</p>
                       </div>
                     )}
-                    
+
                     {(jobData.contact?.mobile || jobData.contact?.phone) && (
                       <div className="flex items-center gap-2 text-gray-300">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -551,7 +559,7 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  
+
                   {jobData.job.job_description && (
                     <div className="mt-3 pt-3 border-t border-primary/20">
                       <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
@@ -583,7 +591,7 @@ export default function Home() {
                 Quote Details
               </h2>
 
-              {/* Pipe Lines - keeping most of existing code, just updating breakdown */}
+              {/* Pipe Lines */}
               <div className="mb-6">
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20 shadow-lg">
                   <div className="flex items-center justify-between mb-4 gap-3">
@@ -614,161 +622,159 @@ export default function Home() {
                       ];
                       const linePosition = pipeLines.findIndex(l => l.id === line.id);
                       const colorClass = lineColors[linePosition % lineColors.length];
-                      
+
                       return (
-                      <div 
-                        key={line.id} 
-                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-xl animate-slideIn"
-                      >
-                        <div className="flex items-center justify-between mb-4 gap-2">
-                          <span className={`px-3 py-1 border rounded-lg text-sm font-bold whitespace-nowrap ${colorClass}`}>
-                            Line {pipeLines.length - index}
-                          </span>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <button
-                              onClick={() => duplicatePipeLine(line)}
-                              className="flex items-center gap-1 text-primary hover:text-white font-semibold text-xs px-2.5 py-1.5 border border-primary/30 hover:border-primary/50 rounded-lg transition-all hover:bg-primary/10 active:scale-95"
-                              title="Duplicate this line"
-                            >
-                              <Icons.Copy />
-                              <span className="hidden sm:inline">Copy</span>
-                            </button>
-                            <button
-                              onClick={() => removePipeLine(line.id)}
-                              className="flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold text-xs px-2.5 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
-                            >
-                              <Icons.X />
-                              <span className="hidden sm:inline">Remove</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Pipe Size */}
-                        <div className="mb-4">
-                          <label className="block text-gray-300 font-semibold mb-2 text-sm">Pipe Size</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'size', '100mm')}
-                              className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
-                                line.size === '100mm'
-                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
-                              }`}
-                            >
-                              100mm
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updatePipeLine(line.id, 'size', '150mm')}
-                              className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
-                                line.size === '150mm'
-                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
-                              }`}
-                            >
-                              150mm
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Meters Slider */}
-                        <div className="mb-4">
-                          <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Meters</label>
-                          <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 mb-3">
-                            <div className="text-center mb-4">
-                              <span className="text-5xl font-bold text-primary">
-                                {line.meters}
-                              </span>
+                        <div
+                          key={line.id}
+                          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-xl animate-slideIn"
+                        >
+                          <div className="flex items-center justify-between mb-4 gap-2">
+                            <span className={`px-3 py-1 border rounded-lg text-sm font-bold whitespace-nowrap ${colorClass}`}>
+                              Line {pipeLines.length - index}
+                            </span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => duplicatePipeLine(line)}
+                                className="flex items-center gap-1 text-primary hover:text-white font-semibold text-xs px-2.5 py-1.5 border border-primary/30 hover:border-primary/50 rounded-lg transition-all hover:bg-primary/10 active:scale-95"
+                                title="Duplicate this line"
+                              >
+                                <Icons.Copy />
+                                <span className="hidden sm:inline">Copy</span>
+                              </button>
+                              <button
+                                onClick={() => removePipeLine(line.id)}
+                                className="flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold text-xs px-2.5 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
+                              >
+                                <Icons.X />
+                                <span className="hidden sm:inline">Remove</span>
+                              </button>
                             </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="50"
-                              step="0.5"
-                              value={line.meters}
-                              onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
-                              className="w-full h-2 bg-gray-700/50 rounded-full appearance-none cursor-pointer"
-                              style={{
-                                background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`
-                              }}
-                            />
                           </div>
-                        </div>
 
-                        {/* Junctions Counter */}
-                        <div className="mb-4">
-                          <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Junctions</label>
-                          <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4">
-                            <div className="flex items-center gap-4">
+                          {/* Pipe Size */}
+                          <div className="mb-4">
+                            <label className="block text-gray-300 font-semibold mb-2 text-sm">Pipe Size</label>
+                            <div className="grid grid-cols-2 gap-2">
                               <button
                                 type="button"
-                                onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
-                                className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
+                                onClick={() => updatePipeLine(line.id, 'size', '100mm')}
+                                className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${line.size === '100mm'
+                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
+                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                                  }`}
                               >
-                                −
+                                100mm
                               </button>
-                              <div className="flex-1 text-center">
-                                <span className="text-5xl font-bold text-amber-400">
-                                  {line.junctions}
+                              <button
+                                type="button"
+                                onClick={() => updatePipeLine(line.id, 'size', '150mm')}
+                                className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${line.size === '150mm'
+                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
+                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                                  }`}
+                              >
+                                150mm
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Meters Slider */}
+                          <div className="mb-4">
+                            <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Meters</label>
+                            <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 mb-3">
+                              <div className="text-center mb-4">
+                                <span className="text-5xl font-bold text-primary">
+                                  {line.meters}
                                 </span>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
-                                className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
-                              >
-                                +
-                              </button>
+                              <input
+                                type="range"
+                                min="0"
+                                max="50"
+                                step="0.5"
+                                value={line.meters}
+                                onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
+                                className="w-full h-2 bg-gray-700/50 rounded-full appearance-none cursor-pointer"
+                                style={{
+                                  background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`
+                                }}
+                              />
                             </div>
                           </div>
-                        </div>
 
-                        {/* Line Total with Breakdown - UPDATED to show NO setup */}
-                        <div className="pt-4 border-t border-gray-700/50">
-                          <button
-                            onClick={() => setShowBreakdown(!showBreakdown)}
-                            className="w-full flex justify-between items-center group"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-400 font-semibold text-sm">Line Total (ex GST)</span>
-                              <Icons.Info />
+                          {/* Junctions Counter */}
+                          <div className="mb-4">
+                            <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Junctions</label>
+                            <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4">
+                              <div className="flex items-center gap-4">
+                                <button
+                                  type="button"
+                                  onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
+                                  className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
+                                >
+                                  −
+                                </button>
+                                <div className="flex-1 text-center">
+                                  <span className="text-5xl font-bold text-amber-400">
+                                    {line.junctions}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
+                                  className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
-                            <span className="text-primary font-bold text-2xl group-hover:scale-105 transition-transform">
-                              ${calculateLineTotal(line).toFixed(2)}
-                            </span>
-                          </button>
-                          
-                          {showBreakdown && (
-                            <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-2 text-sm animate-slideIn">
-                              {(() => {
-                                const breakdown = getLineBreakdown(line);
-                                return (
-                                  <>
-                                    <div className="flex justify-between text-gray-400">
-                                      <span>{line.meters}m × ${PRICING[line.size].perMeter.toFixed(2)}/m</span>
-                                      <span>${breakdown.meters.toFixed(2)}</span>
-                                    </div>
-                                    {line.junctions > 0 && (
+                          </div>
+
+                          {/* Line Total with Breakdown */}
+                          <div className="pt-4 border-t border-gray-700/50">
+                            <button
+                              onClick={() => setShowBreakdown(!showBreakdown)}
+                              className="w-full flex justify-between items-center group"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-400 font-semibold text-sm">Line Total (ex GST)</span>
+                                <Icons.Info />
+                              </div>
+                              <span className="text-primary font-bold text-2xl group-hover:scale-105 transition-transform">
+                                ${calculateLineTotal(line).toFixed(2)}
+                              </span>
+                            </button>
+
+                            {showBreakdown && (
+                              <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-2 text-sm animate-slideIn">
+                                {(() => {
+                                  const breakdown = getLineBreakdown(line);
+                                  return (
+                                    <>
                                       <div className="flex justify-between text-gray-400">
-                                        <span>{line.junctions} junction{line.junctions !== 1 ? 's' : ''} × ${PRICING[line.size].perJunction.toFixed(2)}</span>
-                                        <span>${breakdown.junctions.toFixed(2)}</span>
+                                        <span>{line.meters}m × ${PRICING[line.size].perMeter.toFixed(2)}/m</span>
+                                        <span>${breakdown.meters.toFixed(2)}</span>
                                       </div>
-                                    )}
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          )}
+                                      {line.junctions > 0 && (
+                                        <div className="flex justify-between text-gray-400">
+                                          <span>{line.junctions} junction{line.junctions !== 1 ? 's' : ''} × ${PRICING[line.size].perJunction.toFixed(2)}</span>
+                                          <span>${breakdown.junctions.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
+                      );
                     })}
                   </div>
                 </div>
               </div>
 
-              {/* Digging Section - update display text */}
+              {/* Digging Section */}
               <div className="mb-6">
                 <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl p-4 border border-orange-500/20 shadow-lg">
                   <div className="flex items-center justify-between mb-4 gap-3">
@@ -785,14 +791,12 @@ export default function Home() {
                     </div>
                     <button
                       onClick={() => setDiggingEnabled(!diggingEnabled)}
-                      className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${
-                        diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
-                      }`}
+                      className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
+                        }`}
                     >
                       <span
-                        className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
-                          diggingEnabled ? 'translate-x-6' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${diggingEnabled ? 'translate-x-6' : 'translate-x-0'
+                          }`}
                       />
                     </button>
                   </div>
@@ -834,7 +838,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Extras Section - keeping existing code */}
+              {/* Extras Section */}
               {extraItems.length === 0 ? (
                 <button
                   onClick={addExtraItem}
@@ -930,19 +934,19 @@ export default function Home() {
             </div>
           )}
         </div>
-        
+
         {jobData && pipeLines.length > 0 && (
           <div className="h-[160px]" />
         )}
       </div>
 
-      {/* Sticky Summary Footer - UPDATED with proper breakdown */}
+      {/* Sticky Summary Footer */}
       {jobData && pipeLines.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent py-2 pb-safe z-50 animate-slideUp">
           <div className="max-w-4xl mx-auto px-3">
             <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-3 shadow-2xl shadow-primary/20 backdrop-blur-xl max-w-2xl mx-auto">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              
+
               <div className="relative">
                 {summaryCollapsed ? (
                   <div className="space-y-2">
@@ -969,7 +973,7 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-bold text-white">Summary</h3>
                     </div>
-                    
+
                     <div className="space-y-1 mb-2">
                       {/* Setup Cost */}
                       <div className="flex justify-between items-center gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
@@ -1006,7 +1010,7 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    
+
                     {/* Totals Breakdown */}
                     <div className="pt-2 border-t-2 border-primary/30 mb-2 space-y-1">
                       <div className="flex justify-between items-center text-white text-sm">
@@ -1036,7 +1040,7 @@ export default function Home() {
                     </button>
                   </>
                 )}
-                
+
                 <button
                   disabled={!isValid || generatingQuote}
                   className="w-full py-3 bg-gradient-to-r from-primary via-primary-dark to-primary hover:from-primary-dark hover:via-primary hover:to-primary-dark disabled:from-gray-700 disabled:to-gray-800 text-dark disabled:text-gray-500 font-bold text-base rounded-xl transition-all shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:shadow-none mt-2"
@@ -1045,10 +1049,10 @@ export default function Home() {
                   {generatingQuote ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-dark border-t-transparent rounded-full animate-spin" />
-                      <span>Sending to Qwilr...</span>
+                      <span>Publishing link...</span>
                     </div>
                   ) : (
-                    'Send to Qwilr'
+                    'Publish Quote Link'
                   )}
                 </button>
               </div>
@@ -1057,7 +1061,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Keeping all your existing modals and toasts */}
+      {/* Keeping your existing modals/toasts */}
       {showUndo && (
         <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp">
           <div className="flex items-center gap-4">
@@ -1080,24 +1084,24 @@ export default function Home() {
               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center mb-4">
                 <Icons.Check />
               </div>
-              
-              <h3 className="text-2xl font-bold text-white mb-2">Quote Generated!</h3>
-              <p className="text-gray-400 mb-6">Your quote has been sent to Zapier and Qwilr</p>
-              
+
+              <h3 className="text-2xl font-bold text-white mb-2">Quote Published!</h3>
+              <p className="text-gray-400 mb-6">Your viewer link is ready (copied to clipboard)</p>
+
               {qwilrLink ? (
                 <>
                   <div className="bg-dark-lighter/50 border border-primary/30 rounded-xl p-4 mb-6">
-                    <p className="text-xs text-gray-400 mb-2">Qwilr Link:</p>
-                    <a 
-                      href={qwilrLink} 
-                      target="_blank" 
+                    <p className="text-xs text-gray-400 mb-2">Quote Link:</p>
+                    <a
+                      href={qwilrLink}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:text-white text-sm font-mono break-all underline"
                     >
                       {qwilrLink}
                     </a>
                   </div>
-                  
+
                   <div className="flex gap-3">
                     <button
                       onClick={() => {
@@ -1119,14 +1123,14 @@ export default function Home() {
               ) : (
                 <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-6">
                   <p className="text-orange-400 text-sm">
-                    Quote sent to Zapier successfully!<br/>
+                    Published successfully!
                     <span className="text-xs text-orange-300 mt-1 block">
-                      The Qwilr link will be available once Zapier processes the quote.
+                      No link returned (unexpected).
                     </span>
                   </p>
                 </div>
               )}
-              
+
               <button
                 onClick={() => {
                   setQuoteGenerated(false);
@@ -1150,7 +1154,7 @@ export default function Home() {
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-red-400 font-semibold text-sm">Failed to generate quote</p>
+              <p className="text-red-400 font-semibold text-sm">Failed to publish quote</p>
               <p className="text-red-300 text-xs mt-1">{quoteError}</p>
             </div>
             <button
@@ -1169,24 +1173,12 @@ export default function Home() {
           to { opacity: 1; }
         }
         @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -1197,24 +1189,12 @@ export default function Home() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.8; }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
-        }
-        .animate-slideUp {
-          animation: slideUp 0.3s ease-out;
-        }
-        .animate-shake {
-          animation: shake 0.4s ease-in-out;
-        }
-        .animate-pulse-slow {
-          animation: pulseSlow 2s ease-in-out infinite;
-        }
-        .pb-safe {
-          padding-bottom: env(safe-area-inset-bottom);
-        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-slideIn { animation: slideIn 0.3s ease-out; }
+        .animate-slideUp { animation: slideUp 0.3s ease-out; }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        .animate-pulse-slow { animation: pulseSlow 2s ease-in-out infinite; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
       `}</style>
     </div>
   );
