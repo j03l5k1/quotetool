@@ -121,3 +121,171 @@ export default function QuoteViewer() {
           
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
             Pipe Relining Quote
+          </h1>
+          
+          <p className="text-gray-400 text-sm">
+            Generated {new Date(quote.created_at).toLocaleDateString('en-AU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+        </div>
+
+        {/* Main Card */}
+        <div className="bg-gradient-to-br from-dark-card/90 to-dark-card/70 backdrop-blur-xl rounded-3xl border border-gray-800/50 shadow-2xl p-5 sm:p-7 space-y-6">
+          
+          {/* Customer Info */}
+          <div className="bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20">
+            <h2 className="text-xl font-bold text-white mb-4">Customer Details</h2>
+            <div className="grid gap-3 text-sm">
+              <div>
+                <span className="text-gray-400">Name:</span>
+                <span className="text-white font-semibold ml-2">{quote.customer_name}</span>
+              </div>
+              {quote.customer_email && (
+                <div>
+                  <span className="text-gray-400">Email:</span>
+                  <span className="text-white font-semibold ml-2">{quote.customer_email}</span>
+                </div>
+              )}
+              {quote.customer_phone && (
+                <div>
+                  <span className="text-gray-400">Phone:</span>
+                  <span className="text-white font-semibold ml-2">{quote.customer_phone}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-gray-400">Job Address:</span>
+                <span className="text-white font-semibold ml-2">{quote.job_address}</span>
+              </div>
+              {quote.technician_name && (
+                <div>
+                  <span className="text-gray-400">Technician:</span>
+                  <span className="text-white font-semibold ml-2">{quote.technician_name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Scope of Works */}
+          {quote.scope_of_works && (
+            <div className="bg-dark-lighter/50 rounded-2xl p-5 border border-gray-700/50">
+              <h2 className="text-xl font-bold text-white mb-3">Scope of Works</h2>
+              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                {quote.scope_of_works}
+              </p>
+            </div>
+          )}
+
+          {/* Line Items */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-white">Quote Breakdown</h2>
+            
+            {/* Setup Cost */}
+            <div className="bg-dark-lighter/50 rounded-xl p-4 border border-gray-700/50">
+              <div className="flex justify-between items-center">
+                <span className="text-white font-semibold">Setup & Service Fee</span>
+                <span className="text-primary font-bold text-lg">${quote.setup_cost.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Pipe Lines */}
+            {quote.pipe_lines.map((line, index) => (
+              <div key={line.id} className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 rounded-xl p-4 border border-cyan-500/20">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1">Line {quote.pipe_lines.length - index}</h3>
+                    <p className="text-gray-300 text-sm">
+                      {line.meters}m of {line.size} pipe relining
+                      {line.junctions > 0 && ` with ${line.junctions} junction${line.junctions > 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                  <span className="text-cyan-400 font-bold text-lg ml-4">${line.total.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Digging */}
+            {quote.digging_enabled && quote.digging_hours > 0 && (
+              <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-xl p-4 border border-orange-500/20">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-white font-bold mb-1">Excavation</h3>
+                    <p className="text-gray-300 text-sm">{quote.digging_hours} hours</p>
+                  </div>
+                  <span className="text-orange-400 font-bold text-lg">${quote.digging_total.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Extras */}
+            {quote.extras.length > 0 && quote.extras.map((extra, index) => (
+              <div key={extra.id} className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl p-4 border border-purple-500/20">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold mb-1">Extra {quote.extras.length - index}</h3>
+                    {extra.note && (
+                      <p className="text-gray-300 text-sm">{extra.note}</p>
+                    )}
+                  </div>
+                  <span className="text-purple-400 font-bold text-lg ml-4">${extra.amount.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Totals */}
+          <div className="bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 rounded-2xl p-5 border-2 border-primary/30">
+            <div className="space-y-3">
+              <div className="flex justify-between text-white">
+                <span className="font-semibold">Subtotal (ex GST)</span>
+                <span className="font-bold">${quote.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-gray-300">
+                <span className="font-semibold">GST (10%)</span>
+                <span className="font-bold">${quote.gst.toFixed(2)}</span>
+              </div>
+              <div className="h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent my-2" />
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-white font-bold text-xl">TOTAL (inc GST)</span>
+                <span className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
+                  ${quote.grand_total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            
+              href="/"
+              className="flex-1 py-3 bg-dark-lighter/50 hover:bg-dark-lighter border border-gray-700/50 hover:border-gray-600 text-gray-300 hover:text-white font-semibold rounded-xl transition-all text-center"
+            >
+              New Quote
+            </a>
+            <button
+              onClick={() => window.print()}
+              className="flex-1 py-3 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-dark font-bold rounded-xl transition-all shadow-lg shadow-primary/30"
+            >
+              Print / Save PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @media print {
+          body {
+            background: white !important;
+          }
+          button, a {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
