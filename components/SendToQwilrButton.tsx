@@ -29,7 +29,7 @@ export default function SendToQwilrButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(quoteData),
+        body: JSON.stringify({ payload: quoteData }),
       });
 
       const result = await response.json();
