@@ -2,19 +2,33 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
-  const payload = body?.payload;
+
+  // Accept either { payload: {...} } OR direct {...} (more forgiving)
+  const payload = body?.payload ?? body;
 
   if (!payload) {
     return NextResponse.json({ error: "Missing payload" }, { status: 400 });
   }
 
-  const res = await fetch("https://civiro-quotes.vercel.app/api/quotes", {
+  const secret = process.env.VIEWER_INTAKE_SECRET; // ✅ from Vercel env
+  if (!secret) {
+    return NextResponse.json(
+      { error: "Missing VIEWER_INTAKE_SECRET in Vercel env" },
+      { status: 500 }
+    );
+  }
+
+  const viewerUrl =
+    process.env.VIEWER_PUBLISH_URL ??
+    "https://civiro-quotes.vercel.app/api/quotes";
+
+  const res = await fetch(viewerUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer civiro_intake_8f3d7a2c1b9e4d6f0a5c7e2b",
+      Authorization: `Bearer ${secret}`,
     },
-    body: JSON.stringify({ payload }),
+    body: JSON.stringify({ payload }), // ✅ viewer expects { payload }
   });
 
   const data = await res.json().catch(() => ({}));
@@ -26,5 +40,6 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json(data); // { id, publicToken, publicUrl }
+  // viewer returns { id, publicToken, publicUrl }
+  return NextResponse.json(data);
 }
