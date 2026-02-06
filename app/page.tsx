@@ -245,50 +245,6 @@ export default function Home() {
 
   // ... other code above ...
 
-  const handleGenerateQuote = async () => {
-    // DELETE EVERYTHING FROM HERE...
-    setGeneratingQuote(true);
-    setQuoteError('');
-    
-    try {
-      const quotePayload = {
-        // ... lots of old code ...
-      };
-      // ... more old code ...
-    } catch (err) {
-      // ... error handling ...
-    } finally {
-      setGeneratingQuote(false);
-    }
-  };  // ← STOP DELETING HERE (keep this closing brace and semicolon)
-
-  const addPipeLine = () => {
-    // ... next function starts here ...
-
-      const response = await fetch('/api/send-to-qwilr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(quotePayload),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to generate quote');
-      }
-
-      setQwilrLink(result.qwilrLink || null);
-      setQuoteGenerated(true);
-      
-    } catch (err) {
-      setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
-    } finally {
-      setGeneratingQuote(false);
-    }
-  };
-
   const addPipeLine = () => {
     const newLine: PipeLine = {
       id: Date.now().toString(),
