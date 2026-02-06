@@ -243,6 +243,71 @@ export default function Home() {
     }
   };
 
+  const handleGenerateQuote = async () => {
+    setGeneratingQuote(true);
+    setQuoteError('');
+    
+    try {
+      if (!jobData) {
+        throw new Error('No job data available');
+      }
+
+      const quotePayload = {
+        job_number: jobNumber,
+        customer_name: jobData.company.name,
+        customer_email: jobData.contact?.email || jobData.company.email,
+        customer_phone: jobData.contact?.mobile || jobData.contact?.phone || jobData.company.phone,
+        customer_address: jobData.company.address,
+        job_address: jobData.job.job_address,
+        job_description: jobData.job.job_description,
+        technician_name: technicianName,
+        scope_of_works: scopeOfWorks,
+        pipe_lines: pipeLines.map(line => ({
+          id: line.id,
+          size: line.size,
+          meters: line.meters,
+          junctions: line.junctions,
+          total: calculateLineTotal(line)
+        })),
+        digging_enabled: diggingEnabled,
+        digging_hours: diggingHours,
+        digging_total: diggingTotal,
+        extras: extraItems.map(item => ({
+          id: item.id,
+          note: item.note,
+          amount: item.amount
+        })),
+        setup_cost: PRICING.setup,
+        pipe_work_total: pipeWorkTotal,
+        subtotal: subtotal,
+        gst: gst,
+        grand_total: grandTotal
+      };
+
+      const response = await fetch('/api/quotes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quotePayload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save quote');
+      }
+
+      localStorage.removeItem('quoteDraft');
+      window.location.href = `/quotes/${result.id}`;
+      
+    } catch (err) {
+      setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
+    } finally {
+      setGeneratingQuote(false);
+    }
+  };
+
   // ... other code above ...
 
   const addPipeLine = () => {
