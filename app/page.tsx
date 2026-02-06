@@ -243,41 +243,27 @@ export default function Home() {
     }
   };
 
+  // ... other code above ...
+
   const handleGenerateQuote = async () => {
+    // DELETE EVERYTHING FROM HERE...
     setGeneratingQuote(true);
     setQuoteError('');
     
     try {
       const quotePayload = {
-        jobNumber,
-        jobData,
-        technicianName,
-        scopeOfWorks,
-        pipeLines: pipeLines.map(line => ({
-          size: line.size,
-          meters: line.meters,
-          junctions: line.junctions,
-          total: calculateLineTotal(line) // Pre-GST
-        })),
-        digging: {
-          enabled: diggingEnabled,
-          hours: diggingHours,
-          total: diggingTotal // Pre-GST
-        },
-        extras: extraItems.map(item => ({
-          note: item.note,
-          amount: item.amount // Already pre-GST
-        })),
-        totals: {
-          setupCost: PRICING.setup,
-          pipeWork: pipeWorkTotal,
-          digging: diggingTotal,
-          extras: extrasTotal,
-          subtotal: subtotal, // pre-GST
-          gst: gst,
-          grandTotal: grandTotal // inc GST
-        }
+        // ... lots of old code ...
       };
+      // ... more old code ...
+    } catch (err) {
+      // ... error handling ...
+    } finally {
+      setGeneratingQuote(false);
+    }
+  };  // ← STOP DELETING HERE (keep this closing brace and semicolon)
+
+  const addPipeLine = () => {
+    // ... next function starts here ...
 
       const response = await fetch('/api/send-to-qwilr', {
         method: 'POST',
