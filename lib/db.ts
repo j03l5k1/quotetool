@@ -1,6 +1,14 @@
 export type QuoteData = {
-  payload: any; // MVP: keep flexible
+  job_number: string;
+  customer_name: string;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  job_address?: string | null;
+
+  // whatever your route already builds/sends:
+  payload: any;
 };
+
 
 export async function saveQuote(data: QuoteData) {
   const viewerUrl =
