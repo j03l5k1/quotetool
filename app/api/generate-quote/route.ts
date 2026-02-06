@@ -5,12 +5,9 @@ export async function POST(request: NextRequest) {
   try {
     const quoteData: QuoteData = await request.json();
 
-    // Validate required fields
+    // Validate required fields (MVP)
     if (!quoteData.job_number || !quoteData.customer_name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-    if (!quoteData.payload) {
-      return NextResponse.json({ error: "Missing payload" }, { status: 400 });
     }
 
     // Save to viewer (MVP)
