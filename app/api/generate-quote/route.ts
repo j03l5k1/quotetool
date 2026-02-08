@@ -120,7 +120,16 @@ export async function POST(req: Request) {
         ? `${PUBLIC_QUOTE_BASE_URL.replace(/\/$/, "")}/q/${data.public_id}`
         : `/q/${data.public_id}`;
 
-    return Response.json({ ok: true, public_id: data.public_id, url }, { status: 200 });
+    return Response.json(
+  {
+    ok: true,
+    public_id: data.public_id,
+    publicUrl: url,   // ✅ what the UI wants
+    url,              // optional: keep both while you transition
+  },
+  { status: 200 }
+);
+
   } catch (err: any) {
     console.error("generate-quote route error:", err?.message ?? err, err?.stack);
     return Response.json({ error: "Server error generating quote" }, { status: 500 });
