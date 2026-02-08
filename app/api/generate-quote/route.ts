@@ -86,18 +86,20 @@ export async function POST(req: Request) {
     //
     // If your schema differs, tell me and I’ll map it.
     const insertRow = {
-      public_id,
-      job_number: String(job_number),
-      customer_name: String(customer_name),
-      customer_email: quoteData.customer_email ? String(quoteData.customer_email) : null,
-      customer_phone: quoteData.customer_phone ? String(quoteData.customer_phone) : null,
-      customer_address: quoteData.customer_address ? String(quoteData.customer_address) : null,
-      job_address: quoteData.job_address ? String(quoteData.job_address) : null,
-      scope_of_works: quoteData.scope_of_works ? String(quoteData.scope_of_works) : null,
-      totals,
-      payload: quoteData,
-      created_at: nowIso(),
-    };
+  public_id,
+  public_token: public_id, // ✅ add this line
+  job_number: String(job_number),
+  customer_name: String(customer_name),
+  customer_email: quoteData.customer_email ? String(quoteData.customer_email) : null,
+  customer_phone: quoteData.customer_phone ? String(quoteData.customer_phone) : null,
+  customer_address: quoteData.customer_address ? String(quoteData.customer_address) : null,
+  job_address: quoteData.job_address ? String(quoteData.job_address) : null,
+  scope_of_works: quoteData.scope_of_works ? String(quoteData.scope_of_works) : null,
+  totals,
+  payload: quoteData,
+  created_at: nowIso(),
+};
+
 
     const { data, error } = await supabase
       .from(QUOTES_TABLE)
