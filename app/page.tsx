@@ -241,82 +241,91 @@ export default function Home() {
   };
 
   // ✅ UPDATED: publish to viewer (civiro-quotes) via /api/generate-quote and return publicUrl
-  const handleGenerateQuote = async () => {
-    setGeneratingQuote(true);
-    setQuoteError('');
-    setQuoteGenerated(false);
-    setQwilrLink(null);
+const handleGenerateQuote = async () => {
+  setGeneratingQuote(true);
+  setQuoteError('');
+  setQuoteGenerated(false);
+  setQwilrLink(null);
 
+  try {
+    if (!jobData) throw new Error('No job data available');
+
+    const quotePayload = {
+      job_number: jobNumber,
+      customer_name: jobData.company.name,
+      customer_email: jobData.contact?.email || jobData.company.email,
+      customer_phone:
+        jobData.contact?.mobile ||
+        jobData.contact?.phone ||
+        jobData.company.phone,
+      customer_address: jobData.company.address,
+      job_address: jobData.job.job_address,
+      job_description: jobData.job.job_description,
+      technician_name: technicianName,
+      scope_of_works: scopeOfWorks,
+      pipe_lines: pipeLines.map((line) => ({
+        id: line.id,
+        size: line.size,
+        meters: line.meters,
+        junctions: line.junctions,
+        total: calculateLineTotal(line),
+      })),
+      digging_enabled: diggingEnabled,
+      digging_hours: diggingHours,
+      digging_total: diggingTotal,
+      extras: extraItems.map((item) => ({
+        id: item.id,
+        note: item.note,
+        amount: item.amount,
+      })),
+      setup_cost: PRICING.setup,
+      pipe_work_total: pipeWorkTotal,
+      subtotal: subtotal,
+      gst: gst,
+      grand_total: grandTotal,
+    };
+
+    const response = await fetch('/api/generate-quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(quotePayload),
+    });
+
+    const raw = await response.text();
+    let result: any = {};
     try {
-      if (!jobData) throw new Error('No job data available');
+      result = JSON.parse(raw);
+    } catch {}
 
-      const quotePayload = {
-        job_number: jobNumber,
-        customer_name: jobData.company.name,
-        customer_email: jobData.contact?.email || jobData.company.email,
-        customer_phone: jobData.contact?.mobile || jobData.contact?.phone || jobData.company.phone,
-        customer_address: jobData.company.address,
-        job_address: jobData.job.job_address,
-        job_description: jobData.job.job_description,
-        technician_name: technicianName,
-        scope_of_works: scopeOfWorks,
-        pipe_lines: pipeLines.map(line => ({
-          id: line.id,
-          size: line.size,
-          meters: line.meters,
-          junctions: line.junctions,
-          total: calculateLineTotal(line)
-        })),
-        digging_enabled: diggingEnabled,
-        digging_hours: diggingHours,
-        digging_total: diggingTotal,
-        extras: extraItems.map(item => ({
-          id: item.id,
-          note: item.note,
-          amount: item.amount
-        })),
-        setup_cost: PRICING.setup,
-        pipe_work_total: pipeWorkTotal,
-        subtotal: subtotal,
-        gst: gst,
-        grand_total: grandTotal
-      };
-
-      const response = await fetch('/api/generate-quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(quotePayload),
-      });
-
-      const raw = await response.text();
-      let result: any = {};
-      try { result = JSON.parse(raw); } catch {}
-
-      if (!response.ok) {
-        throw new Error(result?.error || `Failed to publish (${response.status})`);
-      }
-
-      if (!result?.publicUrl) {
-        throw new Error('No publicUrl returned from server');
-      }
-
-      // Show modal + store link (reusing qwilrLink var for MVP)
-      setQwilrLink(result.publicUrl);
-      setQuoteGenerated(true);
-
-      // copy + open (best effort)
-      try { await navigator.clipboard.writeText(result.publicUrl); } catch {}
-      try { window.open(result.publicUrl, '_blank'); } catch {}
-
-      // clear draft once published
-      localStorage.removeItem('quoteDraft');
-
-    } catch (err) {
-      setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
-    } finally {
-      setGeneratingQuote(false);
+    if (!response.ok) {
+      throw new Error(result?.error || `Failed to publish (${response.status})`);
     }
-  };
+
+    if (!result?.publicUrl) {
+      throw new Error('No publicUrl returned from server');
+    }
+
+    // Show modal + store link (reusing qwilrLink var for MVP)
+    setQwilrLink(result.publicUrl);
+    setQuoteGenerated(true);
+
+    // copy + open (best effort)
+    try {
+      await navigator.clipboard.writeText(result.publicUrl);
+    } catch {}
+    try {
+      window.open(result.publicUrl, '_blank');
+    } catch {}
+
+    // clear draft once published
+    localStorage.removeItem('quoteDraft');
+  } catch (err) {
+    setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
+  } finally {
+    setGeneratingQuote(false);
+  }
+};
+
 
   const addPipeLine = () => {
     const newLine: PipeLine = {
