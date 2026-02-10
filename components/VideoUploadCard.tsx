@@ -1,72 +1,115 @@
 "use client";
 
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 type Props = {
-  quoteId: string; // your internal quote id / public id etc
+  /** MUST be the quote's public_id (the one used in /q/[id]) */
+  publicId: string;
+  /** optional callback if you want to store uploadId in your quote tool UI */
   onUploaded?: (uploadId: string) => void;
+  /** optional max size in MB (defaults 500) */
+  maxSizeMb?: number;
 };
 
-export default function VideoUploadCard({ quoteId, onUploaded }: Props) {
+type Status =
+  | ""
+  | "creating"
+  | "uploading"
+  | "processing"
+  | "done"
+  | "error";
+
+export default function VideoUploadCard({
+  publicId,
+  onUploaded,
+  maxSizeMb = 500,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<Status>("");
+  const [message, setMessage] = useState<string>("");
   const [progress, setProgress] = useState<number>(0);
 
-  async function pickFile() {
-    inputRef.current?.click();
+  const pickFile = () => inputRef.current?.click();
+
+  async function createUpload() {
+    const res = await fetch("/api/mux/create-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ public_id: publicId }),
+    });
+
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(t || `create-upload failed (${res.status})`);
+    }
+
+    // expected: { uploadUrl, uploadId }
+    return (await res.json()) as { uploadUrl: string; uploadId: string };
+  }
+
+  function putFile(uploadUrl: string, file: File) {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl, true);
+      xhr.setRequestHeader(
+        "Content-Type",
+        file.type || "application/octet-stream"
+      );
+
+      xhr.upload.onprogress = (evt) => {
+        if (!evt.lengthComputable) return;
+        setProgress(Math.round((evt.loaded / evt.total) * 100));
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed (${xhr.status})`));
+      };
+
+      xhr.onerror = () => reject(new Error("Upload failed (network error)"));
+      xhr.send(file);
+    });
   }
 
   async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0] ?? null;
     if (!file) return;
+
+    // reset
+    setProgress(0);
+    setMessage("");
+
+    // size guard
+    const maxBytes = maxSizeMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setStatus("error");
+      setMessage(`Video too large. Please keep under ${maxSizeMb}MB.`);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
 
     try {
       setBusy(true);
-      setProgress(0);
-      setStatus("Creating upload…");
 
-      // 1) Ask your API for a Mux direct upload URL
-      const res = await fetch("/api/mux/create-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ public_id: quoteId }),
-      });
+      setStatus("creating");
+      setMessage("Creating secure upload…");
+      const { uploadUrl, uploadId } = await createUpload();
 
-      if (!res.ok) throw new Error(await res.text());
-      const { uploadUrl, uploadId } = await res.json();
+      setStatus("uploading");
+      setMessage("Uploading CCTV video…");
+      await putFile(uploadUrl, file);
 
-      setStatus("Uploading video…");
-
-      // 2) Upload to Mux (PUT to uploadUrl)
-      // Use XHR so we can show progress
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-
-        xhr.upload.onprogress = (evt) => {
-          if (!evt.lengthComputable) return;
-          setProgress(Math.round((evt.loaded / evt.total) * 100));
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Upload failed: ${xhr.status}`));
-        };
-
-        xhr.onerror = () => reject(new Error("Upload failed (network)"));
-        xhr.send(file);
-      });
-
-      setStatus("Uploaded. Processing… (may take a minute)");
+      setStatus("processing");
+      setMessage("Uploaded. Processing… (will appear in quote shortly)");
       onUploaded?.(uploadId);
 
-      // Optional: you being fancy later:
-      // - poll your DB for playbackId to flip status to “Ready”
-      // For now, webhook will populate it and viewer will show when ready.
+      // Note: webhook will attach playbackId to the quote.
+      // If you want, you can poll your DB later to flip to "done".
     } catch (err: any) {
-      setStatus(err?.message || "Upload failed");
+      setStatus("error");
+      setMessage(err?.message || "Upload failed");
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -74,52 +117,67 @@ export default function VideoUploadCard({ quoteId, onUploaded }: Props) {
   }
 
   return (
-    <div style={{
-      borderRadius: 16,
-      padding: 16,
-      border: "1px solid rgba(255,255,255,.08)",
-      background: "rgba(255,255,255,.03)",
-      backdropFilter: "blur(10px)",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <div style={{ fontWeight: 700 }}>CCTV Video</div>
-          <div style={{ opacity: 0.75, fontSize: 13 }}>
+    <div
+      style={{
+        borderRadius: 16,
+        padding: 16,
+        border: "1px solid rgba(255,255,255,.08)",
+        background: "rgba(255,255,255,.03)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ minWidth: 240 }}>
+          <div style={{ fontWeight: 800, letterSpacing: 0.2 }}>
+            CCTV Video
+          </div>
+          <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
             Upload the drain footage for this job (phone gallery supported).
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={pickFile}
-          disabled={busy}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 12,
-            border: "1px solid rgba(0,255,255,.25)",
-            background: busy ? "rgba(255,255,255,.06)" : "rgba(0,255,255,.12)",
-            cursor: busy ? "not-allowed" : "pointer",
-            fontWeight: 700,
-          }}
-        >
-          {busy ? "Uploading…" : "Upload CCTV Video"}
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={pickFile}
+            disabled={busy}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,255,255,.25)",
+              background: busy
+                ? "rgba(255,255,255,.06)"
+                : "rgba(0,255,255,.12)",
+              cursor: busy ? "not-allowed" : "pointer",
+              fontWeight: 800,
+            }}
+          >
+            {busy ? "Uploading…" : "Upload CCTV Video"}
+          </button>
 
-        <input
-          ref={inputRef}
-          type="file"
-          accept="video/*"
-          onChange={onFileChange}
-          style={{ display: "none" }}
-        />
+          <input
+            ref={inputRef}
+            type="file"
+            accept="video/*"
+            onChange={onFileChange}
+            style={{ display: "none" }}
+          />
+        </div>
       </div>
 
-      {!!status && (
-        <div style={{ marginTop: 12, fontSize: 13, opacity: 0.85 }}>
-          {status}
-          {progress > 0 && progress < 100 && (
-            <span> — {progress}%</span>
-          )}
+      {(message || status) && (
+        <div style={{ marginTop: 12, fontSize: 13, opacity: 0.9 }}>
+          {status === "uploading" && progress > 0 && progress < 100
+            ? `${message} — ${progress}%`
+            : message}
         </div>
       )}
     </div>
