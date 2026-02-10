@@ -61,11 +61,11 @@ interface QuoteDraft {
 const PRICING = {
   setup: 2272.73, // Fixed setup cost (pre-GST)
   '100mm': {
-    perMeter: 409.09,   // Pre-GST (was 450)
+    perMeter: 409.09, // Pre-GST (was 450)
     perJunction: 681.82, // Pre-GST (was 750)
   },
   '150mm': {
-    perMeter: 500,      // Pre-GST (was 550)
+    perMeter: 500, // Pre-GST (was 550)
     perJunction: 772.73, // Pre-GST (was 850)
   },
   diggingPerHour: 163.64, // Pre-GST (was 180)
@@ -85,7 +85,12 @@ const Icons = {
   ),
   Pipette: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+      />
     </svg>
   ),
   Shovel: () => (
@@ -95,17 +100,32 @@ const Icons = {
   ),
   Package: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+      />
     </svg>
   ),
   FileText: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
     </svg>
   ),
   MapPin: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
@@ -131,7 +151,12 @@ const Icons = {
   ),
   Copy: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+      />
     </svg>
   ),
 };
@@ -143,12 +168,14 @@ export default function Home() {
   const [jobData, setJobData] = useState<JobData | null>(null);
 
   // Quote details
-  const [pipeLines, setPipeLines] = useState<PipeLine[]>([{
-    id: Date.now().toString(),
-    size: '100mm',
-    meters: 10,
-    junctions: 0,
-  }]);
+  const [pipeLines, setPipeLines] = useState<PipeLine[]>([
+    {
+      id: Date.now().toString(),
+      size: '100mm',
+      meters: 10,
+      junctions: 0,
+    },
+  ]);
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
@@ -167,6 +194,12 @@ export default function Home() {
   const [quoteGenerated, setQuoteGenerated] = useState(false);
   const [qwilrLink, setQwilrLink] = useState<string | null>(null); // now used for viewer link
   const [quoteError, setQuoteError] = useState('');
+
+  // CCTV upload state (NEW)
+  const [publicId, setPublicId] = useState<string | null>(null);
+  const [videoStatus, setVideoStatus] = useState<'idle' | 'creating' | 'uploading' | 'processing' | 'done' | 'error'>('idle');
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videoError, setVideoError] = useState('');
 
   // Auto-save draft to localStorage
   useEffect(() => {
@@ -240,161 +273,10 @@ export default function Home() {
     }
   };
 
-  // ✅ UPDATED: publish to viewer (civiro-quotes) via /api/generate-quote and return publicUrl
-const handleGenerateQuote = async () => {
-  setGeneratingQuote(true);
-  setQuoteError('');
-  setQuoteGenerated(false);
-  setQwilrLink(null);
-
-  try {
-    if (!jobData) throw new Error('No job data available');
-
-    const quotePayload = {
-      job_number: jobNumber,
-      customer_name: jobData.company.name,
-      customer_email: jobData.contact?.email || jobData.company.email,
-      customer_phone:
-        jobData.contact?.mobile ||
-        jobData.contact?.phone ||
-        jobData.company.phone,
-      customer_address: jobData.company.address,
-      job_address: jobData.job.job_address,
-      job_description: jobData.job.job_description,
-      technician_name: technicianName,
-      scope_of_works: scopeOfWorks,
-      pipe_lines: pipeLines.map((line) => ({
-        id: line.id,
-        size: line.size,
-        meters: line.meters,
-        junctions: line.junctions,
-        total: calculateLineTotal(line),
-      })),
-      digging_enabled: diggingEnabled,
-      digging_hours: diggingHours,
-      digging_total: diggingTotal,
-      extras: extraItems.map((item) => ({
-        id: item.id,
-        note: item.note,
-        amount: item.amount,
-      })),
-      setup_cost: PRICING.setup,
-      pipe_work_total: pipeWorkTotal,
-      subtotal: subtotal,
-      gst: gst,
-      grand_total: grandTotal,
-    };
-
-    const response = await fetch('/api/generate-quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(quotePayload),
-    });
-
-    const raw = await response.text();
-    let result: any = {};
-    try {
-      result = JSON.parse(raw);
-    } catch {}
-
-    if (!response.ok) {
-      throw new Error(result?.error || `Failed to publish (${response.status})`);
-    }
-
-    if (!result?.publicUrl) {
-      throw new Error('No publicUrl returned from server');
-    }
-
-    // Show modal + store link (reusing qwilrLink var for MVP)
-    setQwilrLink(result.publicUrl);
-    setQuoteGenerated(true);
-
-    // copy + open (best effort)
-    try {
-      await navigator.clipboard.writeText(result.publicUrl);
-    } catch {}
-    try {
-      window.open(result.publicUrl, '_blank');
-    } catch {}
-
-    // clear draft once published
-    localStorage.removeItem('quoteDraft');
-  } catch (err) {
-    setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
-  } finally {
-    setGeneratingQuote(false);
-  }
-};
-
-
-  const addPipeLine = () => {
-    const newLine: PipeLine = {
-      id: Date.now().toString(),
-      size: '100mm',
-      meters: 10,
-      junctions: 0,
-    };
-    setPipeLines([newLine, ...pipeLines]);
-  };
-
-  const removePipeLine = (id: string) => {
-    const removed = pipeLines.find(line => line.id === id);
-    if (removed) {
-      setUndoStack([removed]);
-      setShowUndo(true);
-      setTimeout(() => setShowUndo(false), 5000);
-    }
-    setPipeLines(pipeLines.filter(line => line.id !== id));
-  };
-
-  const undoRemove = () => {
-    if (undoStack.length > 0) {
-      setPipeLines([...undoStack, ...pipeLines]);
-      setUndoStack([]);
-      setShowUndo(false);
-    }
-  };
-
-  const updatePipeLine = (id: string, field: keyof PipeLine, value: any) => {
-    setPipeLines(pipeLines.map(line =>
-      line.id === id ? { ...line, [field]: value } : line
-    ));
-  };
-
-  const duplicatePipeLine = (line: PipeLine) => {
-    const newLine: PipeLine = {
-      ...line,
-      id: Date.now().toString(),
-    };
-    setPipeLines([newLine, ...pipeLines]);
-  };
-
-  const addExtraItem = () => {
-    const newItem: ExtraItem = {
-      id: Date.now().toString(),
-      amount: 0,
-      note: '',
-    };
-    setExtraItems([newItem, ...extraItems]);
-  };
-
-  const removeExtraItem = (id: string) => {
-    setExtraItems(extraItems.filter(item => item.id !== id));
-  };
-
-  const updateExtraItem = (id: string, field: keyof ExtraItem, value: any) => {
-    setExtraItems(extraItems.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
   // Calculate line total (NO setup cost here - just meters + junctions, pre-GST)
   const calculateLineTotal = (line: PipeLine) => {
     const pricing = PRICING[line.size];
-    return (
-      (line.meters * pricing.perMeter) +
-      (line.junctions * pricing.perJunction)
-    );
+    return line.meters * pricing.perMeter + line.junctions * pricing.perJunction;
   };
 
   const getLineBreakdown = (line: PipeLine) => {
@@ -417,7 +299,227 @@ const handleGenerateQuote = async () => {
   const grandTotal = subtotal + gst;
 
   // Validation
-  const isValid = pipeLines.length > 0 && pipeLines.every(line => line.meters > 0);
+  const isValid = pipeLines.length > 0 && pipeLines.every((line) => line.meters > 0);
+
+  // --- CCTV Upload helpers (NEW) ---
+  function uploadViaMuxDirect(uploadUrl: string, file: File) {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl, true);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setVideoProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed (${xhr.status})`));
+      };
+      xhr.onerror = () => reject(new Error('Upload failed (network error)'));
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      xhr.send(file);
+    });
+  }
+
+  const handleUploadCctv = async (file: File) => {
+    setVideoError('');
+    setVideoProgress(0);
+
+    try {
+      if (!publicId) throw new Error('No publicId yet — publish the quote link first.');
+
+      setVideoStatus('creating');
+
+      // Call Quote Tool server route (safe) -> it calls Viewer create-upload
+      const res = await fetch('/api/mux/create-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id: publicId }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed to create upload URL');
+
+      const uploadUrl = String(data?.uploadUrl || '');
+      if (!uploadUrl) throw new Error('No uploadUrl returned');
+
+      setVideoStatus('uploading');
+      await uploadViaMuxDirect(uploadUrl, file);
+
+      // Now Mux processes the asset; viewer webhook flips it to ready
+      setVideoStatus('processing');
+    } catch (e: any) {
+      setVideoStatus('error');
+      setVideoError(e?.message || 'Upload failed');
+    }
+  };
+
+  // ✅ UPDATED: publish to viewer (civiro-quotes) via /api/generate-quote and return publicUrl
+  const handleGenerateQuote = async () => {
+    setGeneratingQuote(true);
+    setQuoteError('');
+    setQuoteGenerated(false);
+    setQwilrLink(null);
+
+    // reset video state for new publish attempt
+    setPublicId(null);
+    setVideoStatus('idle');
+    setVideoProgress(0);
+    setVideoError('');
+
+    try {
+      if (!jobData) throw new Error('No job data available');
+
+      const quotePayload = {
+        job_number: jobNumber,
+        customer_name: jobData.company.name,
+        customer_email: jobData.contact?.email || jobData.company.email,
+        customer_phone: jobData.contact?.mobile || jobData.contact?.phone || jobData.company.phone,
+        customer_address: jobData.company.address,
+        job_address: jobData.job.job_address,
+        job_description: jobData.job.job_description,
+        technician_name: technicianName,
+        scope_of_works: scopeOfWorks,
+        pipe_lines: pipeLines.map((line) => ({
+          id: line.id,
+          size: line.size,
+          meters: line.meters,
+          junctions: line.junctions,
+          total: calculateLineTotal(line),
+        })),
+        digging_enabled: diggingEnabled,
+        digging_hours: diggingHours,
+        digging_total: diggingTotal,
+        extras: extraItems.map((item) => ({
+          id: item.id,
+          note: item.note,
+          amount: item.amount,
+        })),
+        setup_cost: PRICING.setup,
+        pipe_work_total: pipeWorkTotal,
+        subtotal: subtotal,
+        gst: gst,
+        grand_total: grandTotal,
+      };
+
+      const response = await fetch('/api/generate-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quotePayload),
+      });
+
+      const raw = await response.text();
+      let result: any = {};
+      try {
+        result = JSON.parse(raw);
+      } catch {}
+
+      if (!response.ok) {
+        throw new Error(result?.error || `Failed to publish (${response.status})`);
+      }
+
+      if (!result?.publicUrl) {
+        throw new Error('No publicUrl returned from server');
+      }
+
+      // Store link (reusing qwilrLink var for MVP)
+      setQwilrLink(result.publicUrl);
+      setQuoteGenerated(true);
+
+      // Capture publicId from response OR derive from URL
+      const derivedPublicId = (() => {
+        if (result?.publicId) return String(result.publicId);
+
+        try {
+          const u = new URL(String(result.publicUrl));
+          const parts = u.pathname.split('/').filter(Boolean);
+
+          // common: /q/<id>
+          const idx = parts.indexOf('q');
+          if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+
+          // fallback: last segment
+          return parts[parts.length - 1] || null;
+        } catch {
+          return null;
+        }
+      })();
+
+      setPublicId(derivedPublicId);
+
+      // copy + open (best effort)
+      try {
+        await navigator.clipboard.writeText(result.publicUrl);
+      } catch {}
+      try {
+        window.open(result.publicUrl, '_blank');
+      } catch {}
+
+      // clear draft once published
+      localStorage.removeItem('quoteDraft');
+    } catch (err) {
+      setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
+    } finally {
+      setGeneratingQuote(false);
+    }
+  };
+
+  const addPipeLine = () => {
+    const newLine: PipeLine = {
+      id: Date.now().toString(),
+      size: '100mm',
+      meters: 10,
+      junctions: 0,
+    };
+    setPipeLines([newLine, ...pipeLines]);
+  };
+
+  const removePipeLine = (id: string) => {
+    const removed = pipeLines.find((line) => line.id === id);
+    if (removed) {
+      setUndoStack([removed]);
+      setShowUndo(true);
+      setTimeout(() => setShowUndo(false), 5000);
+    }
+    setPipeLines(pipeLines.filter((line) => line.id !== id));
+  };
+
+  const undoRemove = () => {
+    if (undoStack.length > 0) {
+      setPipeLines([...undoStack, ...pipeLines]);
+      setUndoStack([]);
+      setShowUndo(false);
+    }
+  };
+
+  const updatePipeLine = (id: string, field: keyof PipeLine, value: any) => {
+    setPipeLines(pipeLines.map((line) => (line.id === id ? { ...line, [field]: value } : line)));
+  };
+
+  const duplicatePipeLine = (line: PipeLine) => {
+    const newLine: PipeLine = {
+      ...line,
+      id: Date.now().toString(),
+    };
+    setPipeLines([newLine, ...pipeLines]);
+  };
+
+  const addExtraItem = () => {
+    const newItem: ExtraItem = {
+      id: Date.now().toString(),
+      amount: 0,
+      note: '',
+    };
+    setExtraItems([newItem, ...extraItems]);
+  };
+
+  const removeExtraItem = (id: string) => {
+    setExtraItems(extraItems.filter((item) => item.id !== id));
+  };
+
+  const updateExtraItem = (id: string, field: keyof ExtraItem, value: any) => {
+    setExtraItems(extraItems.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e1a] via-[#0d1117] to-[#0a0e1a]">
@@ -426,14 +528,10 @@ const handleGenerateQuote = async () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5 mb-5 backdrop-blur-sm">
             <Icons.FileText />
-            <span className="text-primary font-bold tracking-wide uppercase text-xs">
-              Quote Builder
-            </span>
+            <span className="text-primary font-bold tracking-wide uppercase text-xs">Quote Builder</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-            Drainr Quote Tool
-          </h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">Drainr Quote Tool</h1>
 
           {lastSaved && (
             <div className="flex items-center justify-center gap-2 text-gray-500 text-xs mt-2">
@@ -448,9 +546,7 @@ const handleGenerateQuote = async () => {
           {!jobData ? (
             <>
               <form onSubmit={handleFetchJob} className="space-y-4">
-                <label className="block text-white font-bold mb-3 text-base">
-                  ServiceM8 Job Number
-                </label>
+                <label className="block text-white font-bold mb-3 text-base">ServiceM8 Job Number</label>
 
                 <div className="flex gap-3">
                   <input
@@ -474,7 +570,9 @@ const handleGenerateQuote = async () => {
                         <div className="w-4 h-4 border-2 border-dark border-t-transparent rounded-full animate-spin" />
                         <span>Loading</span>
                       </div>
-                    ) : 'Fetch'}
+                    ) : (
+                      'Fetch'
+                    )}
                   </button>
                 </div>
               </form>
@@ -494,12 +592,14 @@ const handleGenerateQuote = async () => {
                   onClick={() => {
                     if (confirm('Start a new quote? This will clear all current data.')) {
                       setJobData(null);
-                      setPipeLines([{
-                        id: Date.now().toString(),
-                        size: '100mm',
-                        meters: 10,
-                        junctions: 0,
-                      }]);
+                      setPipeLines([
+                        {
+                          id: Date.now().toString(),
+                          size: '100mm',
+                          meters: 10,
+                          junctions: 0,
+                        },
+                      ]);
                       setDiggingHours(0);
                       setDiggingEnabled(false);
                       setExtraItems([]);
@@ -532,7 +632,12 @@ const handleGenerateQuote = async () => {
                     {technicianName && (
                       <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-bold flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
                         </svg>
                         {technicianName}
                       </span>
@@ -553,7 +658,12 @@ const handleGenerateQuote = async () => {
                     {jobData.contact?.email && (
                       <div className="flex items-start gap-2 text-gray-300">
                         <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
                         </svg>
                         <p className="text-sm break-all leading-snug">{jobData.contact.email}</p>
                       </div>
@@ -562,7 +672,12 @@ const handleGenerateQuote = async () => {
                     {(jobData.contact?.mobile || jobData.contact?.phone) && (
                       <div className="flex items-center gap-2 text-gray-300">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5"
+                          />
                         </svg>
                         <p className="text-sm">{jobData.contact.mobile || jobData.contact.phone}</p>
                       </div>
@@ -582,9 +697,7 @@ const handleGenerateQuote = async () => {
 
               {/* Scope of Works Section */}
               <div>
-                <label className="block text-white font-semibold mb-2 text-sm">
-                  Scope of Works
-                </label>
+                <label className="block text-white font-semibold mb-2 text-sm">Scope of Works</label>
                 <textarea
                   value={scopeOfWorks}
                   onChange={(e) => setScopeOfWorks(e.target.value)}
@@ -629,7 +742,7 @@ const handleGenerateQuote = async () => {
                         'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
                         'bg-orange-500/20 border-orange-500/40 text-orange-400',
                       ];
-                      const linePosition = pipeLines.findIndex(l => l.id === line.id);
+                      const linePosition = pipeLines.findIndex((l) => l.id === line.id);
                       const colorClass = lineColors[linePosition % lineColors.length];
 
                       return (
@@ -667,20 +780,22 @@ const handleGenerateQuote = async () => {
                               <button
                                 type="button"
                                 onClick={() => updatePipeLine(line.id, 'size', '100mm')}
-                                className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${line.size === '100mm'
-                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
-                                  }`}
+                                className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
+                                  line.size === '100mm'
+                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
+                                    : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                                }`}
                               >
                                 100mm
                               </button>
                               <button
                                 type="button"
                                 onClick={() => updatePipeLine(line.id, 'size', '150mm')}
-                                className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${line.size === '150mm'
-                                  ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                  : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
-                                  }`}
+                                className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
+                                  line.size === '150mm'
+                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
+                                    : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                                }`}
                               >
                                 150mm
                               </button>
@@ -692,9 +807,7 @@ const handleGenerateQuote = async () => {
                             <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Meters</label>
                             <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 mb-3">
                               <div className="text-center mb-4">
-                                <span className="text-5xl font-bold text-primary">
-                                  {line.meters}
-                                </span>
+                                <span className="text-5xl font-bold text-primary">{line.meters}</span>
                               </div>
                               <input
                                 type="range"
@@ -705,7 +818,7 @@ const handleGenerateQuote = async () => {
                                 onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
                                 className="w-full h-2 bg-gray-700/50 rounded-full appearance-none cursor-pointer"
                                 style={{
-                                  background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`
+                                  background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
                                 }}
                               />
                             </div>
@@ -724,9 +837,7 @@ const handleGenerateQuote = async () => {
                                   −
                                 </button>
                                 <div className="flex-1 text-center">
-                                  <span className="text-5xl font-bold text-amber-400">
-                                    {line.junctions}
-                                  </span>
+                                  <span className="text-5xl font-bold text-amber-400">{line.junctions}</span>
                                 </div>
                                 <button
                                   type="button"
@@ -741,10 +852,7 @@ const handleGenerateQuote = async () => {
 
                           {/* Line Total with Breakdown */}
                           <div className="pt-4 border-t border-gray-700/50">
-                            <button
-                              onClick={() => setShowBreakdown(!showBreakdown)}
-                              className="w-full flex justify-between items-center group"
-                            >
+                            <button onClick={() => setShowBreakdown(!showBreakdown)} className="w-full flex justify-between items-center group">
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-400 font-semibold text-sm">Line Total (ex GST)</span>
                                 <Icons.Info />
@@ -761,12 +869,17 @@ const handleGenerateQuote = async () => {
                                   return (
                                     <>
                                       <div className="flex justify-between text-gray-400">
-                                        <span>{line.meters}m × ${PRICING[line.size].perMeter.toFixed(2)}/m</span>
+                                        <span>
+                                          {line.meters}m × ${PRICING[line.size].perMeter.toFixed(2)}/m
+                                        </span>
                                         <span>${breakdown.meters.toFixed(2)}</span>
                                       </div>
                                       {line.junctions > 0 && (
                                         <div className="flex justify-between text-gray-400">
-                                          <span>{line.junctions} junction{line.junctions !== 1 ? 's' : ''} × ${PRICING[line.size].perJunction.toFixed(2)}</span>
+                                          <span>
+                                            {line.junctions} junction{line.junctions !== 1 ? 's' : ''} × $
+                                            {PRICING[line.size].perJunction.toFixed(2)}
+                                          </span>
                                           <span>${breakdown.junctions.toFixed(2)}</span>
                                         </div>
                                       )}
@@ -800,12 +913,14 @@ const handleGenerateQuote = async () => {
                     </div>
                     <button
                       onClick={() => setDiggingEnabled(!diggingEnabled)}
-                      className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
-                        }`}
+                      className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${
+                        diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
+                      }`}
                     >
                       <span
-                        className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${diggingEnabled ? 'translate-x-6' : 'translate-x-0'
-                          }`}
+                        className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
+                          diggingEnabled ? 'translate-x-6' : 'translate-x-0'
+                        }`}
                       />
                     </button>
                   </div>
@@ -833,12 +948,14 @@ const handleGenerateQuote = async () => {
                         onChange={(e) => setDiggingHours(Number(e.target.value))}
                         className="w-full h-2 rounded-full appearance-none cursor-pointer"
                         style={{
-                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) 100%)`
+                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
                         }}
                       />
                       <div className="pt-4 border-t border-orange-500/20">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-300 font-semibold text-sm">{diggingHours}h × ${PRICING.diggingPerHour.toFixed(2)}/hr (ex GST)</span>
+                          <span className="text-gray-300 font-semibold text-sm">
+                            {diggingHours}h × ${PRICING.diggingPerHour.toFixed(2)}/hr (ex GST)
+                          </span>
                           <span className="text-orange-400 font-bold text-2xl">${diggingTotal.toFixed(2)}</span>
                         </div>
                       </div>
@@ -944,9 +1061,7 @@ const handleGenerateQuote = async () => {
           )}
         </div>
 
-        {jobData && pipeLines.length > 0 && (
-          <div className="h-[160px]" />
-        )}
+        {jobData && pipeLines.length > 0 && <div className="h-[160px]" />}
       </div>
 
       {/* Sticky Summary Footer */}
@@ -971,9 +1086,7 @@ const handleGenerateQuote = async () => {
                     <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-2.5 border-2 border-emerald-500/40 mx-auto max-w-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-emerald-200 font-bold text-sm">Total (inc GST)</span>
-                        <span className="text-3xl font-bold text-emerald-300 leading-none">
-                          ${grandTotal.toFixed(2)}
-                        </span>
+                        <span className="text-3xl font-bold text-emerald-300 leading-none">${grandTotal.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -992,7 +1105,10 @@ const handleGenerateQuote = async () => {
 
                       {/* Pipe Lines */}
                       {pipeLines.map((line, index) => (
-                        <div key={line.id} className="flex justify-between items-start gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
+                        <div
+                          key={line.id}
+                          className="flex justify-between items-start gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5"
+                        >
                           <span className="font-medium leading-tight flex-1">
                             Line {pipeLines.length - index} - {line.meters}m of {line.size}
                             {line.junctions > 0 && ` (${line.junctions} junction${line.junctions !== 1 ? 's' : ''})`}
@@ -1011,10 +1127,11 @@ const handleGenerateQuote = async () => {
 
                       {/* Extras */}
                       {extraItems.map((item, index) => (
-                        <div key={item.id} className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
-                          <span className="font-medium leading-tight flex-1">
-                            {item.note || `Extra ${extraItems.length - index}`}
-                          </span>
+                        <div
+                          key={item.id}
+                          className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5"
+                        >
+                          <span className="font-medium leading-tight flex-1">{item.note || `Extra ${extraItems.length - index}`}</span>
                           <span className="font-bold whitespace-nowrap">${item.amount.toFixed(2)}</span>
                         </div>
                       ))}
@@ -1099,7 +1216,7 @@ const handleGenerateQuote = async () => {
 
               {qwilrLink ? (
                 <>
-                  <div className="bg-dark-lighter/50 border border-primary/30 rounded-xl p-4 mb-6">
+                  <div className="bg-dark-lighter/50 border border-primary/30 rounded-xl p-4 mb-4">
                     <p className="text-xs text-gray-400 mb-2">Quote Link:</p>
                     <a
                       href={qwilrLink}
@@ -1109,6 +1226,53 @@ const handleGenerateQuote = async () => {
                     >
                       {qwilrLink}
                     </a>
+                  </div>
+
+                  {/* CCTV upload (NEW) */}
+                  <div className="bg-dark-lighter/40 border border-gray-700/40 rounded-2xl p-4 mb-6 text-left">
+                    <p className="text-white font-semibold mb-1">CCTV video</p>
+                    <p className="text-gray-400 text-xs mb-3">Upload from mobile — it will show in the customer viewer automatically.</p>
+
+                    {!publicId ? (
+                      <div className="text-orange-300 text-xs bg-orange-500/10 border border-orange-500/30 rounded-xl p-3">
+                        Publish succeeded, but I couldn’t derive a publicId from the URL. (Still fine to open the quote, but upload needs publicId.)
+                        <div className="mt-2 text-gray-400">
+                          Fix: return <span className="text-gray-200 font-mono">publicId</span> from <span className="text-gray-200 font-mono">/api/generate-quote</span>.
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="block w-full text-xs text-gray-300"
+                          disabled={videoStatus === 'creating' || videoStatus === 'uploading'}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadCctv(f);
+                            // allow re-selecting same file
+                            e.currentTarget.value = '';
+                          }}
+                        />
+
+                        <div className="mt-3 text-xs text-gray-300">
+                          Status: <span className="font-semibold">{videoStatus}</span>
+                          {videoStatus === 'uploading' && <span className="ml-2">({videoProgress}%)</span>}
+                          {videoStatus === 'processing' && (
+                            <div className="mt-2 text-gray-400">
+                              Processing… it’ll appear in the viewer automatically once ready.
+                            </div>
+                          )}
+                          {videoError && <div className="mt-2 text-red-400">{videoError}</div>}
+                        </div>
+
+                        {videoStatus === 'uploading' && (
+                          <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+                            <div className="h-full bg-primary" style={{ width: `${videoProgress}%` }} />
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   <div className="flex gap-3">
@@ -1133,9 +1297,7 @@ const handleGenerateQuote = async () => {
                 <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-6">
                   <p className="text-orange-400 text-sm">
                     Published successfully!
-                    <span className="text-xs text-orange-300 mt-1 block">
-                      No link returned (unexpected).
-                    </span>
+                    <span className="text-xs text-orange-300 mt-1 block">No link returned (unexpected).</span>
                   </p>
                 </div>
               )}
@@ -1166,10 +1328,7 @@ const handleGenerateQuote = async () => {
               <p className="text-red-400 font-semibold text-sm">Failed to publish quote</p>
               <p className="text-red-300 text-xs mt-1">{quoteError}</p>
             </div>
-            <button
-              onClick={() => setQuoteError('')}
-              className="text-red-400 hover:text-red-300 transition-colors"
-            >
+            <button onClick={() => setQuoteError('')} className="text-red-400 hover:text-red-300 transition-colors">
               <Icons.X />
             </button>
           </div>
@@ -1178,32 +1337,72 @@ const handleGenerateQuote = async () => {
 
       <style jsx global>{`
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
         @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-10px); }
-          75% { transform: translateX(10px); }
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          25% {
+            transform: translateX(-10px);
+          }
+          75% {
+            transform: translateX(10px);
+          }
         }
         @keyframes pulseSlow {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.8; }
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.8;
+          }
         }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        .animate-slideIn { animation: slideIn 0.3s ease-out; }
-        .animate-slideUp { animation: slideUp 0.3s ease-out; }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-        .animate-pulse-slow { animation: pulseSlow 2s ease-in-out infinite; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+        .animate-pulse-slow {
+          animation: pulseSlow 2s ease-in-out infinite;
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
       `}</style>
     </div>
   );
