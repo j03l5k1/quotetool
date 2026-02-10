@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
+import React, { useEffect, useMemo, useState } from 'react';
+import VideoUploadCard from '@/components/VideoUploadCard';
 
 interface JobContact {
   uuid: string;
@@ -55,24 +55,19 @@ interface QuoteDraft {
   diggingHours: number;
   diggingEnabled: boolean;
   extraItems: ExtraItem[];
+  technicianName: string;
+  scopeOfWorks: string;
   timestamp: number;
 }
 
 // Pricing configuration (PRE-GST PRICES)
 const PRICING = {
-  setup: 2272.73, // Fixed setup cost (pre-GST)
-  '100mm': {
-    perMeter: 409.09, // Pre-GST (was 450)
-    perJunction: 681.82, // Pre-GST (was 750)
-  },
-  '150mm': {
-    perMeter: 500, // Pre-GST (was 550)
-    perJunction: 772.73, // Pre-GST (was 850)
-  },
-  diggingPerHour: 163.64, // Pre-GST (was 180)
+  setup: 2272.73,
+  '100mm': { perMeter: 409.09, perJunction: 681.82 },
+  '150mm': { perMeter: 500, perJunction: 772.73 },
+  diggingPerHour: 163.64,
 };
 
-// Icons
 const Icons = {
   Plus: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -162,126 +157,44 @@ const Icons = {
   ),
 };
 
+function id() {
+  return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function money(n: number) {
+  return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 2 });
+}
+
 export default function Home() {
   const [jobNumber, setJobNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [jobData, setJobData] = useState<JobData | null>(null);
 
-  // Quote details
   const [pipeLines, setPipeLines] = useState<PipeLine[]>([
-    {
-      id: Date.now().toString(),
-      size: '100mm',
-      meters: 10,
-      junctions: 0,
-    },
+    { id: id(), size: '100mm', meters: 10, junctions: 0 },
   ]);
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
-  const [technicianName, setTechnicianName] = useState('');
+  const [technicianName, setTechnicianName] = useState('Drainr Team');
   const [scopeOfWorks, setScopeOfWorks] = useState('');
 
-  // UI state
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [undoStack, setUndoStack] = useState<PipeLine[]>([]);
   const [showUndo, setShowUndo] = useState(false);
   const [summaryCollapsed, setSummaryCollapsed] = useState(true);
 
-  // Quote generation state
   const [generatingQuote, setGeneratingQuote] = useState(false);
   const [quoteGenerated, setQuoteGenerated] = useState(false);
-  const [qwilrLink, setQwilrLink] = useState<string | null>(null); // now used for viewer link
+  const [qwilrLink, setQwilrLink] = useState<string | null>(null);
   const [quoteError, setQuoteError] = useState('');
 
-  // CCTV upload state (NEW)
+  // Mux upload requires viewer publicId
   const [publicId, setPublicId] = useState<string | null>(null);
-  const [videoStatus, setVideoStatus] = useState<'idle' | 'creating' | 'uploading' | 'processing' | 'done' | 'error'>('idle');
-  const [videoProgress, setVideoProgress] = useState(0);
-  const [videoError, setVideoError] = useState('');
 
-  // Auto-save draft to localStorage
-  useEffect(() => {
-    if (jobData) {
-      const draft: QuoteDraft = {
-        jobNumber,
-        jobData,
-        pipeLines,
-        diggingHours,
-        diggingEnabled,
-        extraItems,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem('quoteDraft', JSON.stringify(draft));
-      setLastSaved(new Date());
-    }
-  }, [jobNumber, jobData, pipeLines, diggingHours, diggingEnabled, extraItems]);
-
-  // Load draft on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('quoteDraft');
-    if (saved) {
-      const draft: QuoteDraft = JSON.parse(saved);
-      if (Date.now() - draft.timestamp < 24 * 60 * 60 * 1000) {
-        setJobNumber(draft.jobNumber);
-        setJobData(draft.jobData);
-        setPipeLines(draft.pipeLines);
-        setDiggingHours(draft.diggingHours);
-        setDiggingEnabled(draft.diggingEnabled);
-        setExtraItems(draft.extraItems);
-        setLastSaved(new Date(draft.timestamp));
-      }
-    }
-  }, []);
-
-  const handleFetchJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setJobData(null);
-
-    try {
-      const response = await fetch(`/api/servicem8?jobNumber=${encodeURIComponent(jobNumber)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch job data');
-      }
-
-      console.log('ServiceM8 Response:', data); // Debug
-      setJobData(data);
-
-      // Auto-populate technician name from ServiceM8 staff data
-      if (data.staff) {
-        console.log('Staff data found:', data.staff); // Debug
-        const staffName = `${data.staff.first} ${data.staff.last}`.trim();
-        if (staffName) setTechnicianName(staffName);
-      } else {
-        console.log('No staff data returned from ServiceM8'); // Debug
-        setTechnicianName('Drainr Team');
-      }
-
-      // Auto-populate scope of works from job description
-      if (data.job?.job_description) {
-        setScopeOfWorks(data.job.job_description);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  import VideoUploadCard from "@/components/VideoUploadCard";
-
-// ...
-
-<VideoUploadCard publicId={quote.public_id} />
-
-
-  // Calculate line total (NO setup cost here - just meters + junctions, pre-GST)
+  // ---- pricing/totals ----
   const calculateLineTotal = (line: PipeLine) => {
     const pricing = PRICING[line.size];
     return line.meters * pricing.perMeter + line.junctions * pricing.perJunction;
@@ -296,84 +209,157 @@ export default function Home() {
     };
   };
 
-  // Calculate totals (all pre-GST)
-  const pipeWorkTotal = pipeLines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
-  const diggingTotal = diggingEnabled ? diggingHours * PRICING.diggingPerHour : 0;
-  const extrasTotal = extraItems.reduce((sum, item) => sum + item.amount, 0);
+  const pipeWorkTotal = useMemo(
+    () => pipeLines.reduce((sum, line) => sum + calculateLineTotal(line), 0),
+    [pipeLines]
+  );
 
-  // Add setup cost to subtotal
+  const diggingTotal = useMemo(
+    () => (diggingEnabled ? diggingHours * PRICING.diggingPerHour : 0),
+    [diggingEnabled, diggingHours]
+  );
+
+  const extrasTotal = useMemo(
+    () => extraItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
+    [extraItems]
+  );
+
   const subtotal = PRICING.setup + pipeWorkTotal + diggingTotal + extrasTotal;
   const gst = subtotal * 0.1;
   const grandTotal = subtotal + gst;
 
-  // Validation
-  const isValid = pipeLines.length > 0 && pipeLines.every((line) => line.meters > 0);
+  const isValid = pipeLines.length > 0 && pipeLines.every((l) => Number(l.meters) > 0);
 
-  // --- CCTV Upload helpers (NEW) ---
-  function uploadViaMuxDirect(uploadUrl: string, file: File) {
-    return new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', uploadUrl, true);
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          setVideoProgress(Math.round((e.loaded / e.total) * 100));
-        }
-      };
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else reject(new Error(`Upload failed (${xhr.status})`));
-      };
-      xhr.onerror = () => reject(new Error('Upload failed (network error)'));
-      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-      xhr.send(file);
-    });
-  }
+  // ---- draft autosave ----
+  useEffect(() => {
+    if (!jobData) return;
+    const draft: QuoteDraft = {
+      jobNumber,
+      jobData,
+      pipeLines,
+      diggingHours,
+      diggingEnabled,
+      extraItems,
+      technicianName,
+      scopeOfWorks,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('quoteDraft', JSON.stringify(draft));
+    setLastSaved(new Date());
+  }, [jobNumber, jobData, pipeLines, diggingHours, diggingEnabled, extraItems, technicianName, scopeOfWorks]);
 
-  const handleUploadCctv = async (file: File) => {
-    setVideoError('');
-    setVideoProgress(0);
+  useEffect(() => {
+    const saved = localStorage.getItem('quoteDraft');
+    if (!saved) return;
+    try {
+      const draft: QuoteDraft = JSON.parse(saved);
+      if (Date.now() - draft.timestamp > 24 * 60 * 60 * 1000) return;
+
+      setJobNumber(draft.jobNumber || '');
+      setJobData(draft.jobData || null);
+      setPipeLines(draft.pipeLines?.length ? draft.pipeLines : [{ id: id(), size: '100mm', meters: 10, junctions: 0 }]);
+      setDiggingHours(Number(draft.diggingHours || 0));
+      setDiggingEnabled(Boolean(draft.diggingEnabled));
+      setExtraItems(draft.extraItems || []);
+      setTechnicianName(draft.technicianName || 'Drainr Team');
+      setScopeOfWorks(draft.scopeOfWorks || '');
+      setLastSaved(new Date(draft.timestamp));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // ---- actions ----
+  const handleFetchJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setJobData(null);
 
     try {
-      if (!publicId) throw new Error('No publicId yet — publish the quote link first.');
+      const response = await fetch(`/api/servicem8?jobNumber=${encodeURIComponent(jobNumber)}`);
+      const data = await response.json();
 
-      setVideoStatus('creating');
+      if (!response.ok) throw new Error(data?.error || 'Failed to fetch job data');
 
-      // Call Quote Tool server route (safe) -> it calls Viewer create-upload
-      const res = await fetch('/api/mux/create-upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_id: publicId }),
-      });
+      setJobData(data);
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Failed to create upload URL');
+      if (data?.staff?.first || data?.staff?.last) {
+        const staffName = `${data.staff.first || ''} ${data.staff.last || ''}`.trim();
+        if (staffName) setTechnicianName(staffName);
+      } else {
+        setTechnicianName('Drainr Team');
+      }
 
-      const uploadUrl = String(data?.uploadUrl || '');
-      if (!uploadUrl) throw new Error('No uploadUrl returned');
-
-      setVideoStatus('uploading');
-      await uploadViaMuxDirect(uploadUrl, file);
-
-      // Now Mux processes the asset; viewer webhook flips it to ready
-      setVideoStatus('processing');
-    } catch (e: any) {
-      setVideoStatus('error');
-      setVideoError(e?.message || 'Upload failed');
+      if (data?.job?.job_description) {
+        setScopeOfWorks(data.job.job_description);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✅ UPDATED: publish to viewer (civiro-quotes) via /api/generate-quote and return publicUrl
+  const addPipeLine = () => {
+    setPipeLines([{ id: id(), size: '100mm', meters: 10, junctions: 0 }, ...pipeLines]);
+  };
+
+  const removePipeLine = (lineId: string) => {
+    const removed = pipeLines.find((l) => l.id === lineId);
+    if (removed) {
+      setUndoStack([removed]);
+      setShowUndo(true);
+      window.setTimeout(() => setShowUndo(false), 5000);
+    }
+    setPipeLines(pipeLines.filter((l) => l.id !== lineId));
+  };
+
+  const undoRemove = () => {
+    if (!undoStack.length) return;
+    setPipeLines([...undoStack, ...pipeLines]);
+    setUndoStack([]);
+    setShowUndo(false);
+  };
+
+  const updatePipeLine = (lineId: string, field: keyof PipeLine, value: any) => {
+    setPipeLines(pipeLines.map((l) => (l.id === lineId ? { ...l, [field]: value } : l)));
+  };
+
+  const duplicatePipeLine = (line: PipeLine) => {
+    setPipeLines([{ ...line, id: id() }, ...pipeLines]);
+  };
+
+  const addExtraItem = () => {
+    setExtraItems([{ id: id(), amount: 0, note: '' }, ...extraItems]);
+  };
+
+  const removeExtraItem = (itemId: string) => {
+    setExtraItems(extraItems.filter((i) => i.id !== itemId));
+  };
+
+  const updateExtraItem = (itemId: string, field: keyof ExtraItem, value: any) => {
+    setExtraItems(extraItems.map((i) => (i.id === itemId ? { ...i, [field]: value } : i)));
+  };
+
+  const derivePublicIdFromUrl = (publicUrl: string) => {
+    try {
+      const u = new URL(publicUrl);
+      const parts = u.pathname.split('/').filter(Boolean);
+      const idx = parts.indexOf('q');
+      if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+      return parts[parts.length - 1] || null;
+    } catch {
+      return null;
+    }
+  };
+
   const handleGenerateQuote = async () => {
     setGeneratingQuote(true);
     setQuoteError('');
     setQuoteGenerated(false);
     setQwilrLink(null);
-
-    // reset video state for new publish attempt
     setPublicId(null);
-    setVideoStatus('idle');
-    setVideoProgress(0);
-    setVideoError('');
 
     try {
       if (!jobData) throw new Error('No job data available');
@@ -388,6 +374,9 @@ export default function Home() {
         job_description: jobData.job.job_description,
         technician_name: technicianName,
         scope_of_works: scopeOfWorks,
+
+        setup_cost: PRICING.setup,
+
         pipe_lines: pipeLines.map((line) => ({
           id: line.id,
           size: line.size,
@@ -395,138 +384,61 @@ export default function Home() {
           junctions: line.junctions,
           total: calculateLineTotal(line),
         })),
+
         digging_enabled: diggingEnabled,
         digging_hours: diggingHours,
         digging_total: diggingTotal,
+
         extras: extraItems.map((item) => ({
           id: item.id,
           note: item.note,
           amount: item.amount,
         })),
-        setup_cost: PRICING.setup,
+
         pipe_work_total: pipeWorkTotal,
-        subtotal: subtotal,
-        gst: gst,
+        subtotal,
+        gst,
         grand_total: grandTotal,
       };
 
-      const response = await fetch('/api/generate-quote', {
+      const res = await fetch('/api/generate-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quotePayload),
       });
 
-      const raw = await response.text();
+      const raw = await res.text();
       let result: any = {};
       try {
         result = JSON.parse(raw);
-      } catch {}
-
-      if (!response.ok) {
-        throw new Error(result?.error || `Failed to publish (${response.status})`);
+      } catch {
+        // keep as {}
       }
 
-      if (!result?.publicUrl) {
-        throw new Error('No publicUrl returned from server');
-      }
+      if (!res.ok) throw new Error(result?.error || `Failed to publish (${res.status})`);
 
-      // Store link (reusing qwilrLink var for MVP)
-      setQwilrLink(result.publicUrl);
+      const publicUrl = String(result?.publicUrl || '');
+      if (!publicUrl) throw new Error('No publicUrl returned from server');
+
+      setQwilrLink(publicUrl);
       setQuoteGenerated(true);
 
-      // Capture publicId from response OR derive from URL
-      const derivedPublicId = (() => {
-        if (result?.publicId) return String(result.publicId);
+      const pid = result?.publicId ? String(result.publicId) : derivePublicIdFromUrl(publicUrl);
+      setPublicId(pid);
 
-        try {
-          const u = new URL(String(result.publicUrl));
-          const parts = u.pathname.split('/').filter(Boolean);
-
-          // common: /q/<id>
-          const idx = parts.indexOf('q');
-          if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
-
-          // fallback: last segment
-          return parts[parts.length - 1] || null;
-        } catch {
-          return null;
-        }
-      })();
-
-      setPublicId(derivedPublicId);
-
-      // copy + open (best effort)
       try {
-        await navigator.clipboard.writeText(result.publicUrl);
+        await navigator.clipboard.writeText(publicUrl);
       } catch {}
       try {
-        window.open(result.publicUrl, '_blank');
+        window.open(publicUrl, '_blank');
       } catch {}
 
-      // clear draft once published
       localStorage.removeItem('quoteDraft');
     } catch (err) {
       setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
     } finally {
       setGeneratingQuote(false);
     }
-  };
-
-  const addPipeLine = () => {
-    const newLine: PipeLine = {
-      id: Date.now().toString(),
-      size: '100mm',
-      meters: 10,
-      junctions: 0,
-    };
-    setPipeLines([newLine, ...pipeLines]);
-  };
-
-  const removePipeLine = (id: string) => {
-    const removed = pipeLines.find((line) => line.id === id);
-    if (removed) {
-      setUndoStack([removed]);
-      setShowUndo(true);
-      setTimeout(() => setShowUndo(false), 5000);
-    }
-    setPipeLines(pipeLines.filter((line) => line.id !== id));
-  };
-
-  const undoRemove = () => {
-    if (undoStack.length > 0) {
-      setPipeLines([...undoStack, ...pipeLines]);
-      setUndoStack([]);
-      setShowUndo(false);
-    }
-  };
-
-  const updatePipeLine = (id: string, field: keyof PipeLine, value: any) => {
-    setPipeLines(pipeLines.map((line) => (line.id === id ? { ...line, [field]: value } : line)));
-  };
-
-  const duplicatePipeLine = (line: PipeLine) => {
-    const newLine: PipeLine = {
-      ...line,
-      id: Date.now().toString(),
-    };
-    setPipeLines([newLine, ...pipeLines]);
-  };
-
-  const addExtraItem = () => {
-    const newItem: ExtraItem = {
-      id: Date.now().toString(),
-      amount: 0,
-      note: '',
-    };
-    setExtraItems([newItem, ...extraItems]);
-  };
-
-  const removeExtraItem = (id: string) => {
-    setExtraItems(extraItems.filter((item) => item.id !== id));
-  };
-
-  const updateExtraItem = (id: string, field: keyof ExtraItem, value: any) => {
-    setExtraItems(extraItems.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
   return (
@@ -600,17 +512,12 @@ export default function Home() {
                   onClick={() => {
                     if (confirm('Start a new quote? This will clear all current data.')) {
                       setJobData(null);
-                      setPipeLines([
-                        {
-                          id: Date.now().toString(),
-                          size: '100mm',
-                          meters: 10,
-                          junctions: 0,
-                        },
-                      ]);
+                      setPipeLines([{ id: id(), size: '100mm', meters: 10, junctions: 0 }]);
                       setDiggingHours(0);
                       setDiggingEnabled(false);
                       setExtraItems([]);
+                      setTechnicianName('Drainr Team');
+                      setScopeOfWorks('');
                       localStorage.removeItem('quoteDraft');
                     }
                   }}
@@ -638,15 +545,7 @@ export default function Home() {
                       #{jobData.job.generated_job_id}
                     </span>
                     {technicianName && (
-                      <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-bold flex items-center gap-1.5">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
+                      <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-bold">
                         {technicianName}
                       </span>
                     )}
@@ -659,51 +558,19 @@ export default function Home() {
                       <p className="text-sm leading-snug">{jobData.job.job_address}</p>
                     </div>
 
-                    {jobData.contact && (jobData.contact.email || jobData.contact.mobile || jobData.contact.phone) && (
-                      <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
-                    )}
-
-                    {jobData.contact?.email && (
-                      <div className="flex items-start gap-2 text-gray-300">
-                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <p className="text-sm break-all leading-snug">{jobData.contact.email}</p>
-                      </div>
-                    )}
-
-                    {(jobData.contact?.mobile || jobData.contact?.phone) && (
-                      <div className="flex items-center gap-2 text-gray-300">
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5"
-                          />
-                        </svg>
-                        <p className="text-sm">{jobData.contact.mobile || jobData.contact.phone}</p>
+                    {jobData.job.job_description && (
+                      <div className="mt-3 pt-3 border-t border-primary/20">
+                        <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
+                        <p className="text-gray-300 text-sm">{jobData.job.job_description}</p>
                       </div>
                     )}
                   </div>
-
-                  {jobData.job.job_description && (
-                    <div className="mt-3 pt-3 border-t border-primary/20">
-                      <p className="text-gray-400 text-xs font-semibold mb-1">Job Notes:</p>
-                      <p className="text-gray-300 text-sm">{jobData.job.job_description}</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
 
-              {/* Scope of Works Section */}
+              {/* Scope */}
               <div>
                 <label className="block text-white font-semibold mb-2 text-sm">Scope of Works</label>
                 <textarea
@@ -810,7 +677,7 @@ export default function Home() {
                             </div>
                           </div>
 
-                          {/* Meters Slider */}
+                          {/* Meters */}
                           <div className="mb-4">
                             <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Meters</label>
                             <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 mb-3">
@@ -832,7 +699,7 @@ export default function Home() {
                             </div>
                           </div>
 
-                          {/* Junctions Counter */}
+                          {/* Junctions */}
                           <div className="mb-4">
                             <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Junctions</label>
                             <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4">
@@ -858,15 +725,19 @@ export default function Home() {
                             </div>
                           </div>
 
-                          {/* Line Total with Breakdown */}
+                          {/* Total */}
                           <div className="pt-4 border-t border-gray-700/50">
-                            <button onClick={() => setShowBreakdown(!showBreakdown)} className="w-full flex justify-between items-center group">
+                            <button
+                              type="button"
+                              onClick={() => setShowBreakdown(!showBreakdown)}
+                              className="w-full flex justify-between items-center group"
+                            >
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-400 font-semibold text-sm">Line Total (ex GST)</span>
                                 <Icons.Info />
                               </div>
                               <span className="text-primary font-bold text-2xl group-hover:scale-105 transition-transform">
-                                ${calculateLineTotal(line).toFixed(2)}
+                                {money(calculateLineTotal(line))}
                               </span>
                             </button>
 
@@ -878,17 +749,17 @@ export default function Home() {
                                     <>
                                       <div className="flex justify-between text-gray-400">
                                         <span>
-                                          {line.meters}m × ${PRICING[line.size].perMeter.toFixed(2)}/m
+                                          {line.meters}m × {money(PRICING[line.size].perMeter)}/m
                                         </span>
-                                        <span>${breakdown.meters.toFixed(2)}</span>
+                                        <span>{money(breakdown.meters)}</span>
                                       </div>
                                       {line.junctions > 0 && (
                                         <div className="flex justify-between text-gray-400">
                                           <span>
-                                            {line.junctions} junction{line.junctions !== 1 ? 's' : ''} × $
-                                            {PRICING[line.size].perJunction.toFixed(2)}
+                                            {line.junctions} junction{line.junctions !== 1 ? 's' : ''} ×{' '}
+                                            {money(PRICING[line.size].perJunction)}
                                           </span>
-                                          <span>${breakdown.junctions.toFixed(2)}</span>
+                                          <span>{money(breakdown.junctions)}</span>
                                         </div>
                                       )}
                                     </>
@@ -904,7 +775,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Digging Section */}
+              {/* Digging */}
               <div className="mb-6">
                 <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl p-4 border border-orange-500/20 shadow-lg">
                   <div className="flex items-center justify-between mb-4 gap-3">
@@ -920,6 +791,7 @@ export default function Home() {
                       )}
                     </div>
                     <button
+                      type="button"
                       onClick={() => setDiggingEnabled(!diggingEnabled)}
                       className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${
                         diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
@@ -947,6 +819,7 @@ export default function Home() {
                           step="0.5"
                         />
                       </div>
+
                       <input
                         type="range"
                         min="0"
@@ -959,12 +832,13 @@ export default function Home() {
                           background: `linear-gradient(to right, #f97316 0%, #f97316 ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
                         }}
                       />
+
                       <div className="pt-4 border-t border-orange-500/20">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300 font-semibold text-sm">
-                            {diggingHours}h × ${PRICING.diggingPerHour.toFixed(2)}/hr (ex GST)
+                            {diggingHours}h × {money(PRICING.diggingPerHour)}/hr (ex GST)
                           </span>
-                          <span className="text-orange-400 font-bold text-2xl">${diggingTotal.toFixed(2)}</span>
+                          <span className="text-orange-400 font-bold text-2xl">{money(diggingTotal)}</span>
                         </div>
                       </div>
                     </div>
@@ -972,9 +846,10 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Extras Section */}
+              {/* Extras */}
               {extraItems.length === 0 ? (
                 <button
+                  type="button"
                   onClick={addExtraItem}
                   className="w-full bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:from-purple-500/15 hover:to-purple-600/10 rounded-2xl p-4 border border-purple-500/20 hover:border-purple-500/30 shadow-lg transition-all active:scale-95"
                 >
@@ -1003,6 +878,7 @@ export default function Home() {
                         )}
                       </div>
                       <button
+                        type="button"
                         onClick={addExtraItem}
                         className="flex items-center gap-1.5 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-500/30 active:scale-95 whitespace-nowrap flex-shrink-0"
                       >
@@ -1019,6 +895,7 @@ export default function Home() {
                               Extra {extraItems.length - index}
                             </span>
                             <button
+                              type="button"
                               onClick={() => removeExtraItem(item.id)}
                               className="flex items-center gap-1.5 text-red-400 hover:text-red-300 font-semibold text-xs px-3 py-1.5 border border-red-400/30 hover:border-red-400/50 rounded-lg transition-all hover:bg-red-400/10 active:scale-95"
                             >
@@ -1026,6 +903,7 @@ export default function Home() {
                               Remove
                             </button>
                           </div>
+
                           <div className="space-y-3">
                             <div>
                               <label className="block text-gray-300 font-semibold mb-2 text-sm">Amount (ex GST)</label>
@@ -1042,6 +920,7 @@ export default function Home() {
                                 />
                               </div>
                             </div>
+
                             <div>
                               <label className="block text-gray-300 font-semibold mb-2 text-sm">Description</label>
                               <textarea
@@ -1078,11 +957,11 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-3">
             <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 border-2 border-primary/30 rounded-2xl p-3 shadow-2xl shadow-primary/20 backdrop-blur-xl max-w-2xl mx-auto">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-
               <div className="relative">
                 {summaryCollapsed ? (
                   <div className="space-y-2">
                     <button
+                      type="button"
                       onClick={() => setSummaryCollapsed(false)}
                       className="w-full text-primary hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1 pb-1"
                     >
@@ -1094,7 +973,7 @@ export default function Home() {
                     <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-2.5 border-2 border-emerald-500/40 mx-auto max-w-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-emerald-200 font-bold text-sm">Total (inc GST)</span>
-                        <span className="text-3xl font-bold text-emerald-300 leading-none">${grandTotal.toFixed(2)}</span>
+                        <span className="text-3xl font-bold text-emerald-300 leading-none">{money(grandTotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -1105,65 +984,61 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-1 mb-2">
-                      {/* Setup Cost */}
                       <div className="flex justify-between items-center gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                         <span className="font-medium">Setup & Service</span>
-                        <span className="font-bold whitespace-nowrap">${PRICING.setup.toFixed(2)}</span>
+                        <span className="font-bold whitespace-nowrap">{money(PRICING.setup)}</span>
                       </div>
 
-                      {/* Pipe Lines */}
                       {pipeLines.map((line, index) => (
                         <div
                           key={line.id}
                           className="flex justify-between items-start gap-2 text-gray-200 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5"
                         >
                           <span className="font-medium leading-tight flex-1">
-                            Line {pipeLines.length - index} - {line.meters}m of {line.size}
+                            Line {pipeLines.length - index} — {line.meters}m of {line.size}
                             {line.junctions > 0 && ` (${line.junctions} junction${line.junctions !== 1 ? 's' : ''})`}
                           </span>
-                          <span className="font-bold whitespace-nowrap">${calculateLineTotal(line).toFixed(2)}</span>
+                          <span className="font-bold whitespace-nowrap">{money(calculateLineTotal(line))}</span>
                         </div>
                       ))}
 
-                      {/* Digging */}
                       {diggingEnabled && diggingHours > 0 && (
                         <div className="flex justify-between items-center gap-2 text-orange-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5">
                           <span className="font-medium">Excavation ({diggingHours}h)</span>
-                          <span className="font-bold whitespace-nowrap">${diggingTotal.toFixed(2)}</span>
+                          <span className="font-bold whitespace-nowrap">{money(diggingTotal)}</span>
                         </div>
                       )}
 
-                      {/* Extras */}
                       {extraItems.map((item, index) => (
                         <div
                           key={item.id}
                           className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5"
                         >
                           <span className="font-medium leading-tight flex-1">{item.note || `Extra ${extraItems.length - index}`}</span>
-                          <span className="font-bold whitespace-nowrap">${item.amount.toFixed(2)}</span>
+                          <span className="font-bold whitespace-nowrap">{money(Number(item.amount) || 0)}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Totals Breakdown */}
                     <div className="pt-2 border-t-2 border-primary/30 mb-2 space-y-1">
                       <div className="flex justify-between items-center text-white text-sm">
                         <span className="font-semibold">Subtotal (ex GST)</span>
-                        <span className="font-bold">${subtotal.toFixed(2)}</span>
+                        <span className="font-bold">{money(subtotal)}</span>
                       </div>
                       <div className="flex justify-between items-center text-gray-300 text-sm">
                         <span className="font-semibold">GST (10%)</span>
-                        <span className="font-bold">${gst.toFixed(2)}</span>
+                        <span className="font-bold">{money(gst)}</span>
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-primary/20">
                         <span className="text-white font-bold text-base">TOTAL (inc GST)</span>
                         <span className="text-2xl font-bold bg-gradient-to-r from-primary via-primary-dark to-primary bg-clip-text text-transparent">
-                          ${grandTotal.toFixed(2)}
+                          {money(grandTotal)}
                         </span>
                       </div>
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => setSummaryCollapsed(true)}
                       className="w-full text-primary hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1 mb-2"
                     >
@@ -1195,12 +1070,13 @@ export default function Home() {
         </div>
       )}
 
-      {/* Keeping your existing modals/toasts */}
+      {/* Undo toast */}
       {showUndo && (
         <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp">
           <div className="flex items-center gap-4">
             <span className="text-white text-sm font-medium">Line removed</span>
             <button
+              type="button"
               onClick={undoRemove}
               className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-dark font-bold rounded-xl transition-all text-sm active:scale-95"
             >
@@ -1211,6 +1087,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Published modal */}
       {quoteGenerated && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-gradient-to-br from-dark-card to-dark-lighter border-2 border-primary/30 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-primary/20 animate-slideUp">
@@ -1236,55 +1113,29 @@ export default function Home() {
                     </a>
                   </div>
 
-                  {/* CCTV upload (NEW) */}
+                  {/* CCTV upload (component) */}
                   <div className="bg-dark-lighter/40 border border-gray-700/40 rounded-2xl p-4 mb-6 text-left">
                     <p className="text-white font-semibold mb-1">CCTV video</p>
-                    <p className="text-gray-400 text-xs mb-3">Upload from mobile — it will show in the customer viewer automatically.</p>
+                    <p className="text-gray-400 text-xs mb-3">
+                      Upload from mobile — it will show in the customer viewer automatically.
+                    </p>
 
                     {!publicId ? (
                       <div className="text-orange-300 text-xs bg-orange-500/10 border border-orange-500/30 rounded-xl p-3">
-                        Publish succeeded, but I couldn’t derive a publicId from the URL. (Still fine to open the quote, but upload needs publicId.)
+                        Publish succeeded, but I couldn’t derive a publicId from the URL.
                         <div className="mt-2 text-gray-400">
-                          Fix: return <span className="text-gray-200 font-mono">publicId</span> from <span className="text-gray-200 font-mono">/api/generate-quote</span>.
+                          Fix: return <span className="text-gray-200 font-mono">publicId</span> from{' '}
+                          <span className="text-gray-200 font-mono">/api/generate-quote</span>.
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          className="block w-full text-xs text-gray-300"
-                          disabled={videoStatus === 'creating' || videoStatus === 'uploading'}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) handleUploadCctv(f);
-                            // allow re-selecting same file
-                            e.currentTarget.value = '';
-                          }}
-                        />
-
-                        <div className="mt-3 text-xs text-gray-300">
-                          Status: <span className="font-semibold">{videoStatus}</span>
-                          {videoStatus === 'uploading' && <span className="ml-2">({videoProgress}%)</span>}
-                          {videoStatus === 'processing' && (
-                            <div className="mt-2 text-gray-400">
-                              Processing… it’ll appear in the viewer automatically once ready.
-                            </div>
-                          )}
-                          {videoError && <div className="mt-2 text-red-400">{videoError}</div>}
-                        </div>
-
-                        {videoStatus === 'uploading' && (
-                          <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-                            <div className="h-full bg-primary" style={{ width: `${videoProgress}%` }} />
-                          </div>
-                        )}
-                      </>
+                      <VideoUploadCard publicId={publicId} />
                     )}
                   </div>
 
                   <div className="flex gap-3">
                     <button
+                      type="button"
                       onClick={() => {
                         navigator.clipboard.writeText(qwilrLink);
                         alert('Link copied to clipboard!');
@@ -1294,6 +1145,7 @@ export default function Home() {
                       Copy Link
                     </button>
                     <button
+                      type="button"
                       onClick={() => window.open(qwilrLink, '_blank')}
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30 active:scale-95"
                     >
@@ -1311,6 +1163,7 @@ export default function Home() {
               )}
 
               <button
+                type="button"
                 onClick={() => {
                   setQuoteGenerated(false);
                   setQwilrLink(null);
@@ -1324,6 +1177,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Publish error toast */}
       {quoteError && (
         <div className="fixed bottom-40 left-1/2 -translate-x-1/2 bg-red-500/20 border-2 border-red-500/50 rounded-2xl px-6 py-4 shadow-2xl z-50 animate-slideUp max-w-md">
           <div className="flex items-start gap-3">
@@ -1336,7 +1190,7 @@ export default function Home() {
               <p className="text-red-400 font-semibold text-sm">Failed to publish quote</p>
               <p className="text-red-300 text-xs mt-1">{quoteError}</p>
             </div>
-            <button onClick={() => setQuoteError('')} className="text-red-400 hover:text-red-300 transition-colors">
+            <button type="button" onClick={() => setQuoteError('')} className="text-red-400 hover:text-red-300 transition-colors">
               <Icons.X />
             </button>
           </div>
@@ -1345,72 +1199,27 @@ export default function Home() {
 
       <style jsx global>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          25% {
-            transform: translateX(-10px);
-          }
-          75% {
-            transform: translateX(10px);
-          }
+          0%,100% { transform: translateX(0); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
         }
-        @keyframes pulseSlow {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.8;
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
-        }
-        .animate-slideUp {
-          animation: slideUp 0.3s ease-out;
-        }
-        .animate-shake {
-          animation: shake 0.4s ease-in-out;
-        }
-        .animate-pulse-slow {
-          animation: pulseSlow 2s ease-in-out infinite;
-        }
-        .pb-safe {
-          padding-bottom: env(safe-area-inset-bottom);
-        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-slideIn { animation: slideIn 0.3s ease-out; }
+        .animate-slideUp { animation: slideUp 0.3s ease-out; }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
       `}</style>
     </div>
   );
