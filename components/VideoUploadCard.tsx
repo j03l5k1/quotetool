@@ -30,11 +30,7 @@ export default function VideoUploadCard({ quoteId, onUploaded }: Props) {
       const res = await fetch("/api/mux/create-upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quoteId,
-          filename: file.name,
-          contentType: file.type,
-        }),
+        body: JSON.stringify({ public_id: quoteId }),
       });
 
       if (!res.ok) throw new Error(await res.text());
