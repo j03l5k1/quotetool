@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
+
 interface JobContact {
   uuid: string;
   first: string;
@@ -272,6 +273,13 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  import VideoUploadCard from "@/components/VideoUploadCard";
+
+// ...
+
+<VideoUploadCard publicId={quote.public_id} />
+
 
   // Calculate line total (NO setup cost here - just meters + junctions, pre-GST)
   const calculateLineTotal = (line: PipeLine) => {
