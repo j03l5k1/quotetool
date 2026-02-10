@@ -1,7 +1,8 @@
+// app/api/mux/upload/route.ts
 import { NextResponse } from "next/server";
 import Mux from "@mux/mux-node";
 
-export const runtime = "nodejs"; // ensure Node runtime (not Edge)
+export const runtime = "nodejs"; // IMPORTANT: Mux SDK requires Node runtime
 
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN_ID!,
@@ -9,11 +10,8 @@ const mux = new Mux({
 });
 
 type Body = {
-  // This is the ID we will pass through to the webhook so it knows which quote to update.
-  // Use your quote "public_id" (recommended) or whatever stable identifier you already use.
-  quote_public_id: string;
-
-  // Optional: for debugging/tracking
+  public_id: string;
+  public_token: string;
   created_by?: string;
 };
 
@@ -27,26 +25,28 @@ export async function POST(req: Request) {
     }
 
     const body = (await req.json().catch(() => null)) as Body | null;
-    const quote_public_id = body?.quote_public_id?.trim();
 
-    if (!quote_public_id) {
+    const public_id = body?.public_id?.trim();
+    const public_token = body?.public_token?.trim();
+
+    if (!public_id || !public_token) {
       return NextResponse.json(
-        { ok: false, error: "Missing quote_public_id" },
+        { ok: false, error: "Missing public_id or public_token" },
         { status: 400 }
       );
     }
 
-    // 👇 This is the key: webhook gets this back and can update the correct quote row.
+    // 👇 This is what the webhook will read later
     const passthrough = JSON.stringify({
-      quote_public_id,
+      public_id,
+      public_token,
       created_by: body?.created_by ?? null,
     });
 
-    // Create a Direct Upload URL
     const upload = await mux.video.uploads.create({
-      cors_origin: "*", // tighten later if you want
+      cors_origin: "*", // tighten later if desired
       new_asset_settings: {
-        playback_policy: ["public"], // simplest for now
+        playback_policy: ["public"],
         passthrough,
       },
     });
