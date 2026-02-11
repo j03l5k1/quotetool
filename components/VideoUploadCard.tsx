@@ -3,10 +3,12 @@
 import React, { useRef, useState } from "react";
 
 type Props = {
-  /** MUST be the quote's public_id (the one used in /q/[id]) */
-  publicId: string;
-  /** optional callback if you want to store uploadId in your quote tool UI */
-  onUploaded?: (uploadId: string) => void;
+  /** MUST be the ServiceM8 job uuid (stable identifier across quote lifecycle) */
+  jobUuid: string;
+
+  /** optional callback if you want to store uploadId/jobMediaId in your quote tool UI */
+  onCreated?: (info: { uploadId: string; jobMediaId?: string }) => void;
+
   /** optional max size in MB (defaults 500) */
   maxSizeMb?: number;
 };
@@ -20,8 +22,8 @@ type Status =
   | "error";
 
 export default function VideoUploadCard({
-  publicId,
-  onUploaded,
+  jobUuid,
+  onCreated,
   maxSizeMb = 500,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -37,7 +39,7 @@ export default function VideoUploadCard({
     const res = await fetch("/api/mux/create-upload", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ public_id: publicId }),
+      body: JSON.stringify({ job_uuid: jobUuid }),
     });
 
     if (!res.ok) {
@@ -45,8 +47,19 @@ export default function VideoUploadCard({
       throw new Error(t || `create-upload failed (${res.status})`);
     }
 
-    // expected: { uploadUrl, uploadId }
-    return (await res.json()) as { uploadUrl: string; uploadId: string };
+    // expected (viewer): { ok:true, uploadUrl, uploadId, jobMediaId? }
+    const json = (await res.json()) as any;
+
+    // Be tolerant in case your proxy returns a slightly different shape
+    const uploadUrl = json.uploadUrl || json.upload_url;
+    const uploadId = json.uploadId || json.upload_id;
+    const jobMediaId = json.jobMediaId || json.job_media_id;
+
+    if (!uploadUrl || !uploadId) {
+      throw new Error("create-upload returned invalid payload (missing uploadUrl/uploadId)");
+    }
+
+    return { uploadUrl: String(uploadUrl), uploadId: String(uploadId), jobMediaId };
   }
 
   function putFile(uploadUrl: string, file: File) {
@@ -81,6 +94,14 @@ export default function VideoUploadCard({
     setProgress(0);
     setMessage("");
 
+    // quick guard — jobUuid must exist
+    if (!jobUuid) {
+      setStatus("error");
+      setMessage("Missing job UUID. Load the job first, then upload.");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
     // size guard
     const maxBytes = maxSizeMb * 1024 * 1024;
     if (file.size > maxBytes) {
@@ -95,18 +116,19 @@ export default function VideoUploadCard({
 
       setStatus("creating");
       setMessage("Creating secure upload…");
-      const { uploadUrl, uploadId } = await createUpload();
+      const { uploadUrl, uploadId, jobMediaId } = await createUpload();
+      onCreated?.({ uploadId, jobMediaId });
 
       setStatus("uploading");
       setMessage("Uploading CCTV video…");
       await putFile(uploadUrl, file);
 
       setStatus("processing");
-      setMessage("Uploaded. Processing… (will appear in quote shortly)");
-      onUploaded?.(uploadId);
+      setMessage("Uploaded. Processing… (will appear in the quote viewer shortly)");
 
-      // Note: webhook will attach playbackId to the quote.
-      // If you want, you can poll your DB later to flip to "done".
+      // NOTE:
+      // We do NOT mark "done" here, because Mux processing completes async.
+      // The quote viewer should poll /api/job-media?job_uuid=... and swap in the player when ready.
     } catch (err: any) {
       setStatus("error");
       setMessage(err?.message || "Upload failed");
@@ -136,9 +158,7 @@ export default function VideoUploadCard({
         }}
       >
         <div style={{ minWidth: 240 }}>
-          <div style={{ fontWeight: 800, letterSpacing: 0.2 }}>
-            CCTV Video
-          </div>
+          <div style={{ fontWeight: 800, letterSpacing: 0.2 }}>CCTV Video</div>
           <div style={{ opacity: 0.75, fontSize: 13, marginTop: 2 }}>
             Upload the drain footage for this job (phone gallery supported).
           </div>
@@ -148,17 +168,20 @@ export default function VideoUploadCard({
           <button
             type="button"
             onClick={pickFile}
-            disabled={busy}
+            disabled={busy || !jobUuid}
             style={{
               padding: "10px 14px",
               borderRadius: 12,
               border: "1px solid rgba(0,255,255,.25)",
-              background: busy
-                ? "rgba(255,255,255,.06)"
-                : "rgba(0,255,255,.12)",
-              cursor: busy ? "not-allowed" : "pointer",
+              background:
+                busy || !jobUuid
+                  ? "rgba(255,255,255,.06)"
+                  : "rgba(0,255,255,.12)",
+              cursor: busy || !jobUuid ? "not-allowed" : "pointer",
               fontWeight: 800,
+              opacity: !jobUuid ? 0.7 : 1,
             }}
+            title={!jobUuid ? "Load job first" : undefined}
           >
             {busy ? "Uploading…" : "Upload CCTV Video"}
           </button>
