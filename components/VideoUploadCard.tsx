@@ -3,8 +3,14 @@
 import React, { useRef, useState } from "react";
 
 type Props = {
-  /** MUST be the ServiceM8 job uuid (stable identifier across quote lifecycle) */
-  jobUuid: string;
+  /** Preferred: MUST be the ServiceM8 job uuid (stable identifier across quote lifecycle) */
+  jobUuid?: string;
+
+  /** Backwards-compat: if your page passes publicId, we'll treat it as the job uuid */
+  publicId?: string;
+
+  /** Backwards-compat alias */
+  job_uuid?: string;
 
   /** optional callback if you want to store uploadId/jobMediaId in your quote tool UI */
   onCreated?: (info: { uploadId: string; jobMediaId?: string }) => void;
@@ -23,9 +29,14 @@ type Status =
 
 export default function VideoUploadCard({
   jobUuid,
+  publicId,
+  job_uuid,
   onCreated,
   maxSizeMb = 500,
 }: Props) {
+  // ✅ Normalize identifier (supports old prop names)
+  const resolvedJobUuid = String(jobUuid || job_uuid || publicId || "").trim();
+
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [busy, setBusy] = useState(false);
@@ -39,7 +50,7 @@ export default function VideoUploadCard({
     const res = await fetch("/api/mux/create-upload", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_uuid: jobUuid }),
+      body: JSON.stringify({ job_uuid: resolvedJobUuid }),
     });
 
     if (!res.ok) {
@@ -47,19 +58,24 @@ export default function VideoUploadCard({
       throw new Error(t || `create-upload failed (${res.status})`);
     }
 
-    // expected (viewer): { ok:true, uploadUrl, uploadId, jobMediaId? }
+    // expected: { ok:true, uploadUrl, uploadId, jobMediaId? }
     const json = (await res.json()) as any;
 
-    // Be tolerant in case your proxy returns a slightly different shape
     const uploadUrl = json.uploadUrl || json.upload_url;
     const uploadId = json.uploadId || json.upload_id;
     const jobMediaId = json.jobMediaId || json.job_media_id;
 
     if (!uploadUrl || !uploadId) {
-      throw new Error("create-upload returned invalid payload (missing uploadUrl/uploadId)");
+      throw new Error(
+        "create-upload returned invalid payload (missing uploadUrl/uploadId)"
+      );
     }
 
-    return { uploadUrl: String(uploadUrl), uploadId: String(uploadId), jobMediaId };
+    return {
+      uploadUrl: String(uploadUrl),
+      uploadId: String(uploadId),
+      jobMediaId,
+    };
   }
 
   function putFile(uploadUrl: string, file: File) {
@@ -94,8 +110,8 @@ export default function VideoUploadCard({
     setProgress(0);
     setMessage("");
 
-    // quick guard — jobUuid must exist
-    if (!jobUuid) {
+    // guard — job uuid must exist
+    if (!resolvedJobUuid) {
       setStatus("error");
       setMessage("Missing job UUID. Load the job first, then upload.");
       if (inputRef.current) inputRef.current.value = "";
@@ -125,10 +141,6 @@ export default function VideoUploadCard({
 
       setStatus("processing");
       setMessage("Uploaded. Processing… (will appear in the quote viewer shortly)");
-
-      // NOTE:
-      // We do NOT mark "done" here, because Mux processing completes async.
-      // The quote viewer should poll /api/job-media?job_uuid=... and swap in the player when ready.
     } catch (err: any) {
       setStatus("error");
       setMessage(err?.message || "Upload failed");
@@ -137,6 +149,8 @@ export default function VideoUploadCard({
       if (inputRef.current) inputRef.current.value = "";
     }
   }
+
+  const disabled = busy || !resolvedJobUuid;
 
   return (
     <div
@@ -168,20 +182,19 @@ export default function VideoUploadCard({
           <button
             type="button"
             onClick={pickFile}
-            disabled={busy || !jobUuid}
+            disabled={disabled}
             style={{
               padding: "10px 14px",
               borderRadius: 12,
               border: "1px solid rgba(0,255,255,.25)",
-              background:
-                busy || !jobUuid
-                  ? "rgba(255,255,255,.06)"
-                  : "rgba(0,255,255,.12)",
-              cursor: busy || !jobUuid ? "not-allowed" : "pointer",
+              background: disabled
+                ? "rgba(255,255,255,.06)"
+                : "rgba(0,255,255,.12)",
+              cursor: disabled ? "not-allowed" : "pointer",
               fontWeight: 800,
-              opacity: !jobUuid ? 0.7 : 1,
+              opacity: !resolvedJobUuid ? 0.7 : 1,
             }}
-            title={!jobUuid ? "Load job first" : undefined}
+            title={!resolvedJobUuid ? "Load job first" : undefined}
           >
             {busy ? "Uploading…" : "Upload CCTV Video"}
           </button>
