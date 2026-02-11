@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import VideoUploadCard from '@/components/VideoUploadCard';
+import React, { useEffect, useMemo, useState } from "react";
+import VideoUploadCard from "@/components/VideoUploadCard";
 
 interface JobContact {
   uuid: string;
@@ -14,7 +14,7 @@ interface JobContact {
 
 interface JobData {
   job: {
-    uuid: string;
+    uuid: string; // ✅ ServiceM8 job uuid (used for video uploads)
     job_address: string;
     generated_job_id: string;
     job_description: string;
@@ -37,7 +37,7 @@ interface JobData {
 
 interface PipeLine {
   id: string;
-  size: '100mm' | '150mm';
+  size: "100mm" | "150mm";
   meters: number;
   junctions: number;
 }
@@ -63,8 +63,8 @@ interface QuoteDraft {
 // Pricing configuration (PRE-GST PRICES)
 const PRICING = {
   setup: 2272.73,
-  '100mm': { perMeter: 409.09, perJunction: 681.82 },
-  '150mm': { perMeter: 500, perJunction: 772.73 },
+  "100mm": { perMeter: 409.09, perJunction: 681.82 },
+  "150mm": { perMeter: 500, perJunction: 772.73 },
   diggingPerHour: 163.64,
 };
 
@@ -162,23 +162,27 @@ function id() {
 }
 
 function money(n: number) {
-  return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 2 });
+  return n.toLocaleString("en-AU", {
+    style: "currency",
+    currency: "AUD",
+    minimumFractionDigits: 2,
+  });
 }
 
 export default function Home() {
-  const [jobNumber, setJobNumber] = useState('');
+  const [jobNumber, setJobNumber] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [jobData, setJobData] = useState<JobData | null>(null);
 
   const [pipeLines, setPipeLines] = useState<PipeLine[]>([
-    { id: id(), size: '100mm', meters: 10, junctions: 0 },
+    { id: id(), size: "100mm", meters: 10, junctions: 0 },
   ]);
   const [diggingHours, setDiggingHours] = useState(0);
   const [diggingEnabled, setDiggingEnabled] = useState(false);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
-  const [technicianName, setTechnicianName] = useState('Drainr Team');
-  const [scopeOfWorks, setScopeOfWorks] = useState('');
+  const [technicianName, setTechnicianName] = useState("Drainr Team");
+  const [scopeOfWorks, setScopeOfWorks] = useState("");
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -189,10 +193,7 @@ export default function Home() {
   const [generatingQuote, setGeneratingQuote] = useState(false);
   const [quoteGenerated, setQuoteGenerated] = useState(false);
   const [qwilrLink, setQwilrLink] = useState<string | null>(null);
-  const [quoteError, setQuoteError] = useState('');
-
-  // Mux upload requires viewer publicId
-  const [publicId, setPublicId] = useState<string | null>(null);
+  const [quoteError, setQuoteError] = useState("");
 
   // ---- pricing/totals ----
   const calculateLineTotal = (line: PipeLine) => {
@@ -244,25 +245,38 @@ export default function Home() {
       scopeOfWorks,
       timestamp: Date.now(),
     };
-    localStorage.setItem('quoteDraft', JSON.stringify(draft));
+    localStorage.setItem("quoteDraft", JSON.stringify(draft));
     setLastSaved(new Date());
-  }, [jobNumber, jobData, pipeLines, diggingHours, diggingEnabled, extraItems, technicianName, scopeOfWorks]);
+  }, [
+    jobNumber,
+    jobData,
+    pipeLines,
+    diggingHours,
+    diggingEnabled,
+    extraItems,
+    technicianName,
+    scopeOfWorks,
+  ]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('quoteDraft');
+    const saved = localStorage.getItem("quoteDraft");
     if (!saved) return;
     try {
       const draft: QuoteDraft = JSON.parse(saved);
       if (Date.now() - draft.timestamp > 24 * 60 * 60 * 1000) return;
 
-      setJobNumber(draft.jobNumber || '');
+      setJobNumber(draft.jobNumber || "");
       setJobData(draft.jobData || null);
-      setPipeLines(draft.pipeLines?.length ? draft.pipeLines : [{ id: id(), size: '100mm', meters: 10, junctions: 0 }]);
+      setPipeLines(
+        draft.pipeLines?.length
+          ? draft.pipeLines
+          : [{ id: id(), size: "100mm", meters: 10, junctions: 0 }]
+      );
       setDiggingHours(Number(draft.diggingHours || 0));
       setDiggingEnabled(Boolean(draft.diggingEnabled));
       setExtraItems(draft.extraItems || []);
-      setTechnicianName(draft.technicianName || 'Drainr Team');
-      setScopeOfWorks(draft.scopeOfWorks || '');
+      setTechnicianName(draft.technicianName || "Drainr Team");
+      setScopeOfWorks(draft.scopeOfWorks || "");
       setLastSaved(new Date(draft.timestamp));
     } catch {
       // ignore
@@ -273,36 +287,36 @@ export default function Home() {
   const handleFetchJob = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     setJobData(null);
 
     try {
       const response = await fetch(`/api/servicem8?jobNumber=${encodeURIComponent(jobNumber)}`);
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data?.error || 'Failed to fetch job data');
+      if (!response.ok) throw new Error(data?.error || "Failed to fetch job data");
 
       setJobData(data);
 
       if (data?.staff?.first || data?.staff?.last) {
-        const staffName = `${data.staff.first || ''} ${data.staff.last || ''}`.trim();
+        const staffName = `${data.staff.first || ""} ${data.staff.last || ""}`.trim();
         if (staffName) setTechnicianName(staffName);
       } else {
-        setTechnicianName('Drainr Team');
+        setTechnicianName("Drainr Team");
       }
 
       if (data?.job?.job_description) {
         setScopeOfWorks(data.job.job_description);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
   const addPipeLine = () => {
-    setPipeLines([{ id: id(), size: '100mm', meters: 10, junctions: 0 }, ...pipeLines]);
+    setPipeLines([{ id: id(), size: "100mm", meters: 10, junctions: 0 }, ...pipeLines]);
   };
 
   const removePipeLine = (lineId: string) => {
@@ -331,7 +345,7 @@ export default function Home() {
   };
 
   const addExtraItem = () => {
-    setExtraItems([{ id: id(), amount: 0, note: '' }, ...extraItems]);
+    setExtraItems([{ id: id(), amount: 0, note: "" }, ...extraItems]);
   };
 
   const removeExtraItem = (itemId: string) => {
@@ -342,33 +356,21 @@ export default function Home() {
     setExtraItems(extraItems.map((i) => (i.id === itemId ? { ...i, [field]: value } : i)));
   };
 
-  const derivePublicIdFromUrl = (publicUrl: string) => {
-    try {
-      const u = new URL(publicUrl);
-      const parts = u.pathname.split('/').filter(Boolean);
-      const idx = parts.indexOf('q');
-      if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
-      return parts[parts.length - 1] || null;
-    } catch {
-      return null;
-    }
-  };
-
   const handleGenerateQuote = async () => {
     setGeneratingQuote(true);
-    setQuoteError('');
+    setQuoteError("");
     setQuoteGenerated(false);
     setQwilrLink(null);
-    setPublicId(null);
 
     try {
-      if (!jobData) throw new Error('No job data available');
+      if (!jobData) throw new Error("No job data available");
 
       const quotePayload = {
         job_number: jobNumber,
         customer_name: jobData.company.name,
         customer_email: jobData.contact?.email || jobData.company.email,
-        customer_phone: jobData.contact?.mobile || jobData.contact?.phone || jobData.company.phone,
+        customer_phone:
+          jobData.contact?.mobile || jobData.contact?.phone || jobData.company.phone,
         customer_address: jobData.company.address,
         job_address: jobData.job.job_address,
         job_description: jobData.job.job_description,
@@ -399,11 +401,14 @@ export default function Home() {
         subtotal,
         gst,
         grand_total: grandTotal,
+
+        // ✅ optionally include job_uuid in payload for your viewer intake/reporting
+        job_uuid: jobData.job.uuid,
       };
 
-      const res = await fetch('/api/generate-quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/generate-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(quotePayload),
       });
 
@@ -417,25 +422,22 @@ export default function Home() {
 
       if (!res.ok) throw new Error(result?.error || `Failed to publish (${res.status})`);
 
-      const publicUrl = String(result?.publicUrl || '');
-      if (!publicUrl) throw new Error('No publicUrl returned from server');
+      const publicUrl = String(result?.publicUrl || "");
+      if (!publicUrl) throw new Error("No publicUrl returned from server");
 
       setQwilrLink(publicUrl);
       setQuoteGenerated(true);
-
-      const pid = result?.publicId ? String(result.publicId) : derivePublicIdFromUrl(publicUrl);
-      setPublicId(pid);
 
       try {
         await navigator.clipboard.writeText(publicUrl);
       } catch {}
       try {
-        window.open(publicUrl, '_blank');
+        window.open(publicUrl, "_blank");
       } catch {}
 
-      localStorage.removeItem('quoteDraft');
+      localStorage.removeItem("quoteDraft");
     } catch (err) {
-      setQuoteError(err instanceof Error ? err.message : 'Failed to generate quote');
+      setQuoteError(err instanceof Error ? err.message : "Failed to generate quote");
     } finally {
       setGeneratingQuote(false);
     }
@@ -451,7 +453,9 @@ export default function Home() {
             <span className="text-primary font-bold tracking-wide uppercase text-xs">Quote Builder</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">Drainr Quote Tool</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+            Drainr Quote Tool
+          </h1>
 
           {lastSaved && (
             <div className="flex items-center justify-center gap-2 text-gray-500 text-xs mt-2">
@@ -466,7 +470,9 @@ export default function Home() {
           {!jobData ? (
             <>
               <form onSubmit={handleFetchJob} className="space-y-4">
-                <label className="block text-white font-bold mb-3 text-base">ServiceM8 Job Number</label>
+                <label className="block text-white font-bold mb-3 text-base">
+                  ServiceM8 Job Number
+                </label>
 
                 <div className="flex gap-3">
                   <input
@@ -491,7 +497,7 @@ export default function Home() {
                         <span>Loading</span>
                       </div>
                     ) : (
-                      'Fetch'
+                      "Fetch"
                     )}
                   </button>
                 </div>
@@ -499,8 +505,12 @@ export default function Home() {
 
               {lastSaved && !jobData && (
                 <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-2xl">
-                  <p className="text-primary text-sm font-semibold">Continue where you left off?</p>
-                  <p className="text-gray-400 text-xs mt-1">Draft from {lastSaved.toLocaleTimeString()}</p>
+                  <p className="text-primary text-sm font-semibold">
+                    Continue where you left off?
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Draft from {lastSaved.toLocaleTimeString()}
+                  </p>
                 </div>
               )}
             </>
@@ -510,15 +520,15 @@ export default function Home() {
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => {
-                    if (confirm('Start a new quote? This will clear all current data.')) {
+                    if (confirm("Start a new quote? This will clear all current data.")) {
                       setJobData(null);
-                      setPipeLines([{ id: id(), size: '100mm', meters: 10, junctions: 0 }]);
+                      setPipeLines([{ id: id(), size: "100mm", meters: 10, junctions: 0 }]);
                       setDiggingHours(0);
                       setDiggingEnabled(false);
                       setExtraItems([]);
-                      setTechnicianName('Drainr Team');
-                      setScopeOfWorks('');
-                      localStorage.removeItem('quoteDraft');
+                      setTechnicianName("Drainr Team");
+                      setScopeOfWorks("");
+                      localStorage.removeItem("quoteDraft");
                     }
                   }}
                   className="text-orange-400 hover:text-orange-300 text-sm font-bold border border-orange-400/30 hover:border-orange-400/50 px-4 py-2 rounded-xl transition-all hover:bg-orange-400/10 active:scale-95"
@@ -528,7 +538,7 @@ export default function Home() {
                 <button
                   onClick={() => {
                     setJobData(null);
-                    localStorage.removeItem('quoteDraft');
+                    localStorage.removeItem("quoteDraft");
                   }}
                   className="text-primary hover:text-white text-sm font-bold border border-primary/30 hover:border-primary/50 px-4 py-2 rounded-xl transition-all hover:bg-primary/10 active:scale-95"
                 >
@@ -566,6 +576,15 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* ✅ CCTV Upload (Step 1) */}
+              <div className="bg-dark-lighter/40 border border-gray-700/40 rounded-2xl p-4">
+                <p className="text-white font-semibold mb-1">CCTV video</p>
+                <p className="text-gray-400 text-xs mb-3">
+                  Upload from mobile — it will show in the customer viewer automatically (no need to publish first).
+                </p>
+                <VideoUploadCard jobUuid={jobData.job.uuid} />
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
@@ -610,12 +629,12 @@ export default function Home() {
                   <div className="space-y-3">
                     {[...pipeLines].reverse().map((line, index) => {
                       const lineColors = [
-                        'bg-cyan-500/20 border-cyan-500/40 text-cyan-400',
-                        'bg-blue-500/20 border-blue-500/40 text-blue-400',
-                        'bg-purple-500/20 border-purple-500/40 text-purple-400',
-                        'bg-pink-500/20 border-pink-500/40 text-pink-400',
-                        'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
-                        'bg-orange-500/20 border-orange-500/40 text-orange-400',
+                        "bg-cyan-500/20 border-cyan-500/40 text-cyan-400",
+                        "bg-blue-500/20 border-blue-500/40 text-blue-400",
+                        "bg-purple-500/20 border-purple-500/40 text-purple-400",
+                        "bg-pink-500/20 border-pink-500/40 text-pink-400",
+                        "bg-emerald-500/20 border-emerald-500/40 text-emerald-400",
+                        "bg-orange-500/20 border-orange-500/40 text-orange-400",
                       ];
                       const linePosition = pipeLines.findIndex((l) => l.id === line.id);
                       const colorClass = lineColors[linePosition % lineColors.length];
@@ -626,7 +645,9 @@ export default function Home() {
                           className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-xl animate-slideIn"
                         >
                           <div className="flex items-center justify-between mb-4 gap-2">
-                            <span className={`px-3 py-1 border rounded-lg text-sm font-bold whitespace-nowrap ${colorClass}`}>
+                            <span
+                              className={`px-3 py-1 border rounded-lg text-sm font-bold whitespace-nowrap ${colorClass}`}
+                            >
                               Line {pipeLines.length - index}
                             </span>
                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -650,26 +671,28 @@ export default function Home() {
 
                           {/* Pipe Size */}
                           <div className="mb-4">
-                            <label className="block text-gray-300 font-semibold mb-2 text-sm">Pipe Size</label>
+                            <label className="block text-gray-300 font-semibold mb-2 text-sm">
+                              Pipe Size
+                            </label>
                             <div className="grid grid-cols-2 gap-2">
                               <button
                                 type="button"
-                                onClick={() => updatePipeLine(line.id, 'size', '100mm')}
+                                onClick={() => updatePipeLine(line.id, "size", "100mm")}
                                 className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
-                                  line.size === '100mm'
-                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                    : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                                  line.size === "100mm"
+                                    ? "bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30"
+                                    : "bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40"
                                 }`}
                               >
                                 100mm
                               </button>
                               <button
                                 type="button"
-                                onClick={() => updatePipeLine(line.id, 'size', '150mm')}
+                                onClick={() => updatePipeLine(line.id, "size", "150mm")}
                                 className={`py-4 rounded-xl font-bold transition-all text-lg relative overflow-hidden active:scale-95 ${
-                                  line.size === '150mm'
-                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30'
-                                    : 'bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40'
+                                  line.size === "150mm"
+                                    ? "bg-gradient-to-br from-primary to-primary-dark text-dark shadow-lg shadow-primary/30"
+                                    : "bg-dark-lighter/50 border border-gray-600/50 text-gray-300 hover:border-primary/40"
                                 }`}
                               >
                                 150mm
@@ -679,7 +702,9 @@ export default function Home() {
 
                           {/* Meters */}
                           <div className="mb-4">
-                            <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Meters</label>
+                            <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">
+                              Meters
+                            </label>
                             <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 mb-3">
                               <div className="text-center mb-4">
                                 <span className="text-5xl font-bold text-primary">{line.meters}</span>
@@ -690,10 +715,14 @@ export default function Home() {
                                 max="50"
                                 step="0.5"
                                 value={line.meters}
-                                onChange={(e) => updatePipeLine(line.id, 'meters', Number(e.target.value))}
+                                onChange={(e) =>
+                                  updatePipeLine(line.id, "meters", Number(e.target.value))
+                                }
                                 className="w-full h-2 bg-gray-700/50 rounded-full appearance-none cursor-pointer"
                                 style={{
-                                  background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
+                                  background: `linear-gradient(to right, #00d9ff 0%, #00d9ff ${
+                                    (line.meters / 50) * 100
+                                  }%, rgba(55, 65, 81, 0.5) ${(line.meters / 50) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
                                 }}
                               />
                             </div>
@@ -701,22 +730,28 @@ export default function Home() {
 
                           {/* Junctions */}
                           <div className="mb-4">
-                            <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">Junctions</label>
+                            <label className="block text-gray-300 font-semibold mb-3 text-sm text-center">
+                              Junctions
+                            </label>
                             <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4">
                               <div className="flex items-center gap-4">
                                 <button
                                   type="button"
-                                  onClick={() => updatePipeLine(line.id, 'junctions', Math.max(0, line.junctions - 1))}
+                                  onClick={() =>
+                                    updatePipeLine(line.id, "junctions", Math.max(0, line.junctions - 1))
+                                  }
                                   className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
                                 >
                                   −
                                 </button>
                                 <div className="flex-1 text-center">
-                                  <span className="text-5xl font-bold text-amber-400">{line.junctions}</span>
+                                  <span className="text-5xl font-bold text-amber-400">
+                                    {line.junctions}
+                                  </span>
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => updatePipeLine(line.id, 'junctions', line.junctions + 1)}
+                                  onClick={() => updatePipeLine(line.id, "junctions", line.junctions + 1)}
                                   className="w-14 h-14 bg-dark-lighter/50 border-2 border-amber-500/50 hover:border-amber-500 rounded-xl text-white font-bold text-2xl transition-all hover:bg-amber-500/10 active:scale-90"
                                 >
                                   +
@@ -733,7 +768,9 @@ export default function Home() {
                               className="w-full flex justify-between items-center group"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-400 font-semibold text-sm">Line Total (ex GST)</span>
+                                <span className="text-gray-400 font-semibold text-sm">
+                                  Line Total (ex GST)
+                                </span>
                                 <Icons.Info />
                               </div>
                               <span className="text-primary font-bold text-2xl group-hover:scale-105 transition-transform">
@@ -756,7 +793,7 @@ export default function Home() {
                                       {line.junctions > 0 && (
                                         <div className="flex justify-between text-gray-400">
                                           <span>
-                                            {line.junctions} junction{line.junctions !== 1 ? 's' : ''} ×{' '}
+                                            {line.junctions} junction{line.junctions !== 1 ? "s" : ""} ×{" "}
                                             {money(PRICING[line.size].perJunction)}
                                           </span>
                                           <span>{money(breakdown.junctions)}</span>
@@ -794,12 +831,12 @@ export default function Home() {
                       type="button"
                       onClick={() => setDiggingEnabled(!diggingEnabled)}
                       className={`relative w-14 h-8 rounded-full transition-all shadow-inner active:scale-95 ${
-                        diggingEnabled ? 'bg-orange-500 shadow-orange-500/50' : 'bg-gray-600'
+                        diggingEnabled ? "bg-orange-500 shadow-orange-500/50" : "bg-gray-600"
                       }`}
                     >
                       <span
                         className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${
-                          diggingEnabled ? 'translate-x-6' : 'translate-x-0'
+                          diggingEnabled ? "translate-x-6" : "translate-x-0"
                         }`}
                       />
                     </button>
@@ -829,7 +866,9 @@ export default function Home() {
                         onChange={(e) => setDiggingHours(Number(e.target.value))}
                         className="w-full h-2 rounded-full appearance-none cursor-pointer"
                         style={{
-                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
+                          background: `linear-gradient(to right, #f97316 0%, #f97316 ${
+                            (diggingHours / 8) * 100
+                          }%, rgba(55, 65, 81, 0.5) ${(diggingHours / 8) * 100}%, rgba(55, 65, 81, 0.5) 100%)`,
                         }}
                       />
 
@@ -860,7 +899,9 @@ export default function Home() {
                     <h3 className="text-base font-bold text-white">Add Extras</h3>
                     <Icons.Plus />
                   </div>
-                  <p className="text-gray-400 text-sm mt-2">Materials, equipment, etc. (enter ex-GST amount)</p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Materials, equipment, etc. (enter ex-GST amount)
+                  </p>
                 </button>
               ) : (
                 <div className="mb-6">
@@ -889,7 +930,10 @@ export default function Home() {
 
                     <div className="space-y-3 mt-5">
                       {[...extraItems].reverse().map((item, index) => (
-                        <div key={item.id} className="bg-dark-lighter/50 backdrop-blur-sm rounded-2xl p-4 border border-purple-500/30 animate-slideIn">
+                        <div
+                          key={item.id}
+                          className="bg-dark-lighter/50 backdrop-blur-sm rounded-2xl p-4 border border-purple-500/30 animate-slideIn"
+                        >
                           <div className="flex items-center justify-between mb-4">
                             <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-400 text-sm font-bold">
                               Extra {extraItems.length - index}
@@ -906,13 +950,19 @@ export default function Home() {
 
                           <div className="space-y-3">
                             <div>
-                              <label className="block text-gray-300 font-semibold mb-2 text-sm">Amount (ex GST)</label>
+                              <label className="block text-gray-300 font-semibold mb-2 text-sm">
+                                Amount (ex GST)
+                              </label>
                               <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-lg font-bold">$</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-lg font-bold">
+                                  $
+                                </span>
                                 <input
                                   type="number"
                                   value={item.amount}
-                                  onChange={(e) => updateExtraItem(item.id, 'amount', Math.max(0, Number(e.target.value)))}
+                                  onChange={(e) =>
+                                    updateExtraItem(item.id, "amount", Math.max(0, Number(e.target.value)))
+                                  }
                                   inputMode="numeric"
                                   className="w-full bg-dark-lighter/50 border border-purple-500/30 rounded-xl pl-10 pr-4 py-3 text-white text-xl font-bold focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
                                   min="0"
@@ -922,10 +972,12 @@ export default function Home() {
                             </div>
 
                             <div>
-                              <label className="block text-gray-300 font-semibold mb-2 text-sm">Description</label>
+                              <label className="block text-gray-300 font-semibold mb-2 text-sm">
+                                Description
+                              </label>
                               <textarea
                                 value={item.note}
-                                onChange={(e) => updateExtraItem(item.id, 'note', e.target.value)}
+                                onChange={(e) => updateExtraItem(item.id, "note", e.target.value)}
                                 placeholder="What is this extra for?"
                                 className="w-full bg-dark-lighter/50 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-gray-500 resize-none text-sm focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
                                 rows={2}
@@ -996,7 +1048,7 @@ export default function Home() {
                         >
                           <span className="font-medium leading-tight flex-1">
                             Line {pipeLines.length - index} — {line.meters}m of {line.size}
-                            {line.junctions > 0 && ` (${line.junctions} junction${line.junctions !== 1 ? 's' : ''})`}
+                            {line.junctions > 0 && ` (${line.junctions} junction${line.junctions !== 1 ? "s" : ""})`}
                           </span>
                           <span className="font-bold whitespace-nowrap">{money(calculateLineTotal(line))}</span>
                         </div>
@@ -1014,7 +1066,9 @@ export default function Home() {
                           key={item.id}
                           className="flex justify-between items-start gap-2 text-purple-300 text-xs bg-white/5 backdrop-blur-sm rounded-lg p-1.5"
                         >
-                          <span className="font-medium leading-tight flex-1">{item.note || `Extra ${extraItems.length - index}`}</span>
+                          <span className="font-medium leading-tight flex-1">
+                            {item.note || `Extra ${extraItems.length - index}`}
+                          </span>
                           <span className="font-bold whitespace-nowrap">{money(Number(item.amount) || 0)}</span>
                         </div>
                       ))}
@@ -1061,7 +1115,7 @@ export default function Home() {
                       <span>Publishing link...</span>
                     </div>
                   ) : (
-                    'Publish Quote Link'
+                    "Publish Quote Link"
                   )}
                 </button>
               </div>
@@ -1113,32 +1167,12 @@ export default function Home() {
                     </a>
                   </div>
 
-                  {/* CCTV upload (component) */}
-                  <div className="bg-dark-lighter/40 border border-gray-700/40 rounded-2xl p-4 mb-6 text-left">
-                    <p className="text-white font-semibold mb-1">CCTV video</p>
-                    <p className="text-gray-400 text-xs mb-3">
-                      Upload from mobile — it will show in the customer viewer automatically.
-                    </p>
-
-                    {!publicId ? (
-                      <div className="text-orange-300 text-xs bg-orange-500/10 border border-orange-500/30 rounded-xl p-3">
-                        Publish succeeded, but I couldn’t derive a publicId from the URL.
-                        <div className="mt-2 text-gray-400">
-                          Fix: return <span className="text-gray-200 font-mono">publicId</span> from{' '}
-                          <span className="text-gray-200 font-mono">/api/generate-quote</span>.
-                        </div>
-                      </div>
-                    ) : (
-                      <VideoUploadCard publicId={publicId} />
-                    )}
-                  </div>
-
                   <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => {
                         navigator.clipboard.writeText(qwilrLink);
-                        alert('Link copied to clipboard!');
+                        alert("Link copied to clipboard!");
                       }}
                       className="flex-1 px-4 py-3 bg-primary/20 border border-primary/30 hover:bg-primary/30 text-primary font-bold rounded-xl transition-all text-sm active:scale-95"
                     >
@@ -1146,7 +1180,7 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => window.open(qwilrLink, '_blank')}
+                      onClick={() => window.open(qwilrLink, "_blank")}
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-dark font-bold rounded-xl transition-all text-sm shadow-lg shadow-primary/30 active:scale-95"
                     >
                       Open Quote
@@ -1157,7 +1191,9 @@ export default function Home() {
                 <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-6">
                   <p className="text-orange-400 text-sm">
                     Published successfully!
-                    <span className="text-xs text-orange-300 mt-1 block">No link returned (unexpected).</span>
+                    <span className="text-xs text-orange-300 mt-1 block">
+                      No link returned (unexpected).
+                    </span>
                   </p>
                 </div>
               )}
@@ -1190,7 +1226,11 @@ export default function Home() {
               <p className="text-red-400 font-semibold text-sm">Failed to publish quote</p>
               <p className="text-red-300 text-xs mt-1">{quoteError}</p>
             </div>
-            <button type="button" onClick={() => setQuoteError('')} className="text-red-400 hover:text-red-300 transition-colors">
+            <button
+              type="button"
+              onClick={() => setQuoteError("")}
+              className="text-red-400 hover:text-red-300 transition-colors"
+            >
               <Icons.X />
             </button>
           </div>
@@ -1199,27 +1239,60 @@ export default function Home() {
 
       <style jsx global>{`
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
         @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes shake {
-          0%,100% { transform: translateX(0); }
-          25% { transform: translateX(-10px); }
-          75% { transform: translateX(10px); }
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          25% {
+            transform: translateX(-10px);
+          }
+          75% {
+            transform: translateX(10px);
+          }
         }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        .animate-slideIn { animation: slideIn 0.3s ease-out; }
-        .animate-slideUp { animation: slideUp 0.3s ease-out; }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
       `}</style>
     </div>
   );
